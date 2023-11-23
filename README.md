@@ -1,6 +1,6 @@
-# emergency-webcrawler
+# Emergency-webcrawler
 
-this project helps claws the web for emergency 
+This project helps crawls the web for emergency incidents
 ## Python Directory
 -type1 uses google api
 
