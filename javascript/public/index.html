@@ -39,6 +39,8 @@
       <select id="searchBase" name="searchBase" class="px-2 py-1 border">
         <option value="vanguard">Vanguard News</option>
         <option value="punch">Punch newspaper</option>
+        <option value="daily">Daily trust</option>
+        <option value="guyana">News Room Guyana</option>
         <!-- Add more options as needed -->
       </select>
     </div>
@@ -427,12 +429,15 @@
             // Populate reports
             for (const report of reports) {
               const listItem = document.createElement('li');
-              const location = searchBase === 'vanguard' ? 'Nigeria' : ''; // Set location based on search base
+              let location = '';
+
+              
+
               listItem.innerHTML = `
             <h2 class="text-xl font-bold">${report.accidentType}</h2>
-            <p class="text-sm">Date: ${report.date}</p>
+            <p class="text-sm">Time: ${report.date}</p>
             <p class="text-sm">Details: ${report.details}</p>
-            <p class="text-sm">Location: ${location}</p> <!-- Add location to the reports -->
+            <p class="text-sm">Location: ${report.location}</p> <!-- Add location to the reports -->
             <button onclick="saveReport()" class="btn-icon bg-green-500 p-2 text-white" title="Save">
               <i class="bi bi-floppy"></i>
             </button>
