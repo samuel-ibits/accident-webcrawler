@@ -82,7 +82,7 @@ async function searchAndScrape(searchBase, query, startDate, endDate) {
       await page.setUserAgent(userAgent);
 
       // Increase navigation timeout
-      await page.goto(searchUrl, { timeout: 60000 });
+      await page.goto(searchUrl, { timeout: 120000 });
 
       // Wait for some time to simulate human-like behavior
       await page.waitForTimeout(randomDelay());
@@ -117,7 +117,120 @@ async function searchAndScrape(searchBase, query, startDate, endDate) {
       await browser.close();
 
       return reports;
-    } else {
+    }
+    else if (searchBase === "daily") {
+      const generateSearchUrl = (query) => `https://dailytrust.com/search/#gsc.tab=0&gsc.q=${encodeURIComponent(query)}&gsc.sort=`;
+    
+      const searchUrl = generateSearchUrl(query);
+    
+      const browser = await puppeteer.launch({ headless: true });
+      const page = await browser.newPage();
+      const userAgent = randomUseragent.getRandom();
+    
+      await page.setUserAgent(userAgent);
+    
+      // Increase navigation timeout
+      await page.goto(searchUrl, { timeout: 120000 });
+    
+      // Wait for some time to simulate human-like behavior
+      await page.waitForTimeout(randomDelay());
+    
+      const html = await page.content();
+      const $ = cheerio.load(html);
+    
+      const accidentReports = $(".gsc-webResult.gsc-result");
+    
+      let reports = [];
+    
+      accidentReports.each((index, element) => {
+        const titleElement = $(element).find(".gs-title a");
+        const link = titleElement.attr("href");
+        const accidentType = titleElement.text();
+        const snippetElement = $(element).find(".gs-snippet");
+    
+        // Extract the date using a regular expression
+        const dateMatch = snippetElement.text().match(/(\d{1,2} [a-zA-Z]+ \d{4})/);
+        const date = dateMatch ? dateMatch[0] : null;
+    
+        // Extract details after the <b>...</b> and remove the date
+        const details = snippetElement.contents().filter((_, el) => el.nodeType === 3).text().replace(date, '').trim();
+    
+        // Check if the report's date is within the specified range
+        if (isDateInRange(date, startDate, endDate)) {
+          // Add 'location: Nigeria' property for reports from 'daily' search base
+          reports.push({
+            accidentType,
+            date,
+            details,
+            location: "Nigeria",
+            link,
+          });
+        }
+      });
+    
+      await browser.close();
+    
+      return reports;
+    }
+    else if (searchBase === "guyana") {
+      const generateSearchUrl = (query) => `https://guyanatimesgy.com/?s=${query}`;
+    
+      const searchUrl = generateSearchUrl(query);
+    
+      const browser = await puppeteer.launch({ headless: true });
+      const page = await browser.newPage();
+      const userAgent = randomUseragent.getRandom();
+    
+      await page.setUserAgent(userAgent);
+    
+      // Increase navigation timeout
+      await page.goto(searchUrl, { timeout: 120000 });
+    
+      // Wait for some time to simulate human-like behavior
+      await page.waitForTimeout(randomDelay());
+    
+      const html = await page.content();
+      const $ = cheerio.load(html);
+    
+      const accidentReports = $(".td_module_16.td_module_wrap.td-animation-stack");
+    
+      let reports = [];
+    
+      accidentReports.each((index, element) => {
+        const titleElement = $(element).find(".entry-title a");
+        const link = titleElement.attr("href");
+        const accidentType = titleElement.text();
+        const dateElement = $(element).find(".td-post-date time");
+        const rawDate = dateElement.attr("datetime");
+    
+        // Convert the raw date to a human-readable format
+        const date = new Date(rawDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+    
+        // Extract details
+        const details = $(element).find(".td-excerpt").text().trim();
+    
+        // Check if the report's date is within the specified range
+        if (isDateInRange(date, startDate, endDate)) {
+          // Add 'location: Guyana' property for reports from 'guyana' search base
+          reports.push({
+            accidentType,
+            date,
+            details,
+            location: "Guyana",
+            link,
+          });
+        }
+      });
+    
+      await browser.close();
+    
+      return reports;
+    }
+    
+    
+    
+    
+     else {
       return [];
     }
   } catch (error) {
