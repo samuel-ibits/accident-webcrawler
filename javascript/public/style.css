@@ -22,7 +22,8 @@ body {
 }
 
 .results-container {
-  width: 65vw;
+  min-width: 65vw;
+  max-width: 67vw;
   overflow-y: auto;
   margin: 0px 3rem;
 }
