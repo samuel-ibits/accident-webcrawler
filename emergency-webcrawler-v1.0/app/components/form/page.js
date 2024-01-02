@@ -1,4 +1,5 @@
 "use client";
+
 import React, { useState } from "react";
 
 export default function ScrapeForm() {
@@ -7,6 +8,7 @@ export default function ScrapeForm() {
     fromDate: "",
     toDate: "",
     specialParameters: "",
+    searchBase: "",
   });
 
   const [formSuccess, setFormSuccess] = useState(false);
@@ -27,17 +29,20 @@ export default function ScrapeForm() {
     e.preventDefault();
     setIsSubmitting(true);
 
-    const formURL = e.target.action;
+    const formURL = "http://localhost:3000/api/scrape";
     const data = new FormData();
 
     Object.entries(formData).forEach(([key, value]) => {
       data.append(key, value);
     });
 
+    console.log(data);
+
     fetch(formURL, {
       method: "POST",
-      body: data,
+      body: "hello",
       headers: {
+        // accept: "application/x-www-form-urlencoded",
         accept: "application/json",
       },
     })
@@ -48,12 +53,15 @@ export default function ScrapeForm() {
           fromDate: "",
           toDate: "",
           specialParameters: "",
+          searchBase: "",
         });
 
         setFormSuccess(true);
         setFormSuccessMessage(data.submission_text);
+        console.log(data);
       })
       .catch((error) => {
+        // console.log("Error submitting form:", error);
         console.error("Error submitting form:", error);
         // Handle error state or display an error message to the user
       })
@@ -63,23 +71,42 @@ export default function ScrapeForm() {
   };
 
   return (
-    <div className="max-w-md mx-auto mt-8 p-4 bg-white shadow-md rounded">
-      <h1 className="text-2xl text-gray-800 font-semibold mb-4">Emergency Webscraper</h1>
-      <p className="text-gray-600 mb-4">
+    <div className="max-w-md mx-auto mt-8 p-8 bg-white shadow-md rounded-lg">
+      <h1 className="text-3xl text-gray-800 font-semibold mb-6">
+        Emergency Webscraper
+      </h1>
+      <p className="text-gray-600 mb-6">
         Please fill in the information below:
       </p>
 
       {formSuccess ? (
-        <div className="bg-green-100 border-l-4 border-green-500 p-4 mb-4">
+        <div className="bg-green-100 border-l-4 border-green-500 p-4 mb-6">
           {formSuccessMessage}
         </div>
       ) : (
-        <form
-          method="POST"
-          action="https://www.formbackend.com/f/664decaabbf1c319"
-          onSubmit={submitForm}
-        >
-          <div className="mb-4">
+        <form onSubmit={submitForm}>
+          <div className="mb-6">
+            <label
+              htmlFor="searchBase"
+              className="block text-sm font-medium text-gray-600"
+            >
+              Search Base
+            </label>
+            <select
+              id="searchBase"
+              name="searchBase"
+              onChange={handleInput}
+              value={formData.searchBase}
+              className="text-gray-600 mt-1 p-2 border border-gray-300 rounded-md w-full focus:outline-none focus:ring focus:border-blue-500"
+            >
+              <option value="">Select Search Base</option>
+              <option value="google.com">Google.com</option>
+              <option value="abc.com">ABC.com</option>
+              {/* Add more options as needed */}
+            </select>
+          </div>
+
+          <div className="mb-6">
             <label
               htmlFor="emergencyType"
               className="block text-sm font-medium text-gray-600"
@@ -91,7 +118,7 @@ export default function ScrapeForm() {
               name="emergencyType"
               onChange={handleInput}
               value={formData.emergencyType}
-              className="mt-1 p-2 border border-gray-300 rounded-md w-full"
+              className="text-gray-600 mt-1 p-2 border border-gray-300 rounded-md w-full focus:outline-none focus:ring focus:border-blue-500"
             >
               <option value="">Select Emergency Type</option>
               <option value="flood">Flood</option>
@@ -102,7 +129,7 @@ export default function ScrapeForm() {
             </select>
           </div>
 
-          <div className="mb-4">
+          <div className="mb-6">
             <label
               htmlFor="fromDate"
               className="block text-sm font-medium text-gray-600"
@@ -115,11 +142,11 @@ export default function ScrapeForm() {
               name="fromDate"
               onChange={handleInput}
               value={formData.fromDate}
-              className="mt-1 p-2 border border-gray-300 rounded-md w-full"
+              className="text-gray-600 mt-1 p-2 border border-gray-300 rounded-md w-full focus:outline-none focus:ring focus:border-blue-500"
             />
           </div>
 
-          <div className="mb-4">
+          <div className="mb-6">
             <label
               htmlFor="toDate"
               className="block text-sm font-medium text-gray-600"
@@ -132,11 +159,11 @@ export default function ScrapeForm() {
               name="toDate"
               onChange={handleInput}
               value={formData.toDate}
-              className="mt-1 p-2 border border-gray-300 rounded-md w-full"
+              className="text-gray-600 mt-1 p-2 border border-gray-300 rounded-md w-full focus:outline-none focus:ring focus:border-blue-500"
             />
           </div>
 
-          <div className="mb-4">
+          <div className="mb-6">
             <label
               htmlFor="specialParameters"
               className="block text-sm font-medium text-gray-600"
@@ -148,13 +175,13 @@ export default function ScrapeForm() {
               name="specialParameters"
               onChange={handleInput}
               value={formData.specialParameters}
-              className="mt-1 p-2 border border-gray-300 rounded-md w-full"
+              className="text-gray-600 mt-1 p-2 border border-gray-300 rounded-md w-full focus:outline-none focus:ring focus:border-blue-500"
             ></textarea>
           </div>
 
           <button
             type="submit"
-            className={`bg-blue-500 text-white p-2 rounded-md ${
+            className={`bg-blue-500 text-white p-3 rounded-md ${
               isSubmitting ? "opacity-50 cursor-not-allowed" : ""
             }`}
             disabled={isSubmitting}
