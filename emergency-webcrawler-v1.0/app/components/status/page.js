@@ -1,10 +1,8 @@
 "use client";
 import React, { useState } from "react";
 
+
 const ScraperStatus = ({
-  totalItems,
-  verifiedItems,
-  unverifiedItems,
   scrappedItems,
 }) => {
   const itemsPerPage = 5;
@@ -25,6 +23,11 @@ const ScraperStatus = ({
     // Implement logic for rejecting an item
     console.log("Reject item at index", index);
   };
+
+  // Calculate status
+  const totalItems = scrappedItems.length;
+  const verifiedItems = 0; // You need to implement logic for verification
+  const unverifiedItems = totalItems - verifiedItems;
 
   return (
     <div className="text-gray-800 max-w-md mx-auto mt-8 p-4 bg-white shadow-md rounded ">
@@ -47,17 +50,18 @@ const ScraperStatus = ({
       <h2 className="text-xl font-semibold mb-2">Scrapped Items</h2>
 
       <ul>
+        
         {currentItems.map((item, index) => (
           <li key={index} className="mb-4 p-4 border border-gray-300 rounded">
             <strong>Accident Type:</strong> {item.accidentType}
             <br />
             <strong>Location:</strong> {item.location}
             <br />
-            <strong>Date of Occurrence:</strong> {item.date}
+            <strong>Date of Occurrence:</strong> {item.dateOfOccurance}
             <br />
-            <strong>Time:</strong> {item.time}
+            <strong>Time:</strong> {item.timeOfOcccurance}
             <br />
-            <strong>Accident Details:</strong> {item.details}
+            <strong>Accident Details:</strong> {item.accidentDetails}
             <br />
             <div className="mt-2 flex items-center">
               <button

@@ -1,9 +1,13 @@
-import { NextResponse } from "next/server";
 import { exec } from "child_process";
 
-export default class Gateway {
+export default class Gateways {
   constructor() {}
-
+async engine(request){
+  switch(request){
+    case "":
+      request()
+  }
+}
   async type1(request) {
     const { text } = await request.json();
     const translatedTextPromise = new Promise((resolve, reject) => {
@@ -22,7 +26,8 @@ export default class Gateway {
 
     return translatedText;
   }
-  async type2(request) {
+  async test(request) {
+    console.log({message:"got to gateway sucessfully", data: request})
     return request;
   }
 }
