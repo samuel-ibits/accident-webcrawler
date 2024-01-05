@@ -43,7 +43,8 @@ export async function POST(request) {
 export async function GET(request) {
   await connectMongoDB();
   const data = await QueryDB.find();
-  return NextResponse.json({ message: "fetched", data: data });
+  const queries = await QueryDB.countDocuments();
+  return NextResponse.json({ message: "fetched",queries: queries, data: data });
 }
 
 //handles delete each request

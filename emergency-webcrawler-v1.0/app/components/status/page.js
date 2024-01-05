@@ -4,6 +4,9 @@ import React, { useState } from "react";
 
 const ScraperStatus = ({
   scrappedItems,
+  verifiedItems,
+  unverifiedItems,
+  totalItems,
 }) => {
   const itemsPerPage = 5;
   const [currentPage, setCurrentPage] = useState(1);
@@ -23,11 +26,6 @@ const ScraperStatus = ({
     // Implement logic for rejecting an item
     console.log("Reject item at index", index);
   };
-
-  // Calculate status
-  const totalItems = scrappedItems.length;
-  const verifiedItems = 0; // You need to implement logic for verification
-  const unverifiedItems = totalItems - verifiedItems;
 
   return (
     <div className="text-gray-800 max-w-md mx-auto mt-8 p-4 bg-white shadow-md rounded ">
@@ -50,8 +48,9 @@ const ScraperStatus = ({
       <h2 className="text-xl font-semibold mb-2">Scrapped Items</h2>
 
       <ul>
-        
+     
         {currentItems.map((item, index) => (
+       
           <li key={index} className="mb-4 p-4 border border-gray-300 rounded">
             <strong>Accident Type:</strong> {item.accidentType}
             <br />
@@ -78,7 +77,9 @@ const ScraperStatus = ({
               </button>
             </div>
           </li>
+          
         ))}
+      
       </ul>
 
       {/* Pagination */}

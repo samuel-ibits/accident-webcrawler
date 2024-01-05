@@ -10,7 +10,7 @@ import Navbar from "../components/navbar/page"; // Adjust the import path based 
 
 const fetchedScrappedItems =async ()=>{
 try{
- const res =  await fetch("http://localhost:3000/api/scrape/fetch", {
+ const res =  await fetch("http://localhost:3000/api/scrape/status", {
       method: "GET",
       cache:"no-store",
     })
@@ -26,15 +26,37 @@ try{
 console.log("errorloading tempdb", error)
 }}
 
+//fecthed queries
+const fetchQueries = async () => {
+  try {
+    const res = await fetch("http://localhost:3000/api/scrape/run", {
+      method: "GET",
+      cache: "no-store",
+    });
+    if (!res.ok) {
+      throw new Error("failed to fetch tempdb");
+    }
+    // console.log("try",res.json())
+    // alert(res)
+
+    return res.json();
+  } catch (error) {
+    console.log("errorloading tempdb", error);
+  }
+};
+
+
+
 export default async function Dashboard() {
 
 let totalQueries=0;
   const scrappedItems=await fetchedScrappedItems();
-//  setScrappedItems(newdata);
-//     setTotalQueries((prevTotal) => prevTotal + 1);
-console.log("test daa", scrappedItems)
-// const scrappedItems = data;
- 
+const queryItem= await fetchQueries()
+ // Calculate status
+  const verifiedItems = scrappedItems.accepted;
+  const unverifiedItems = scrappedItems.new;
+    const totalItems = verifiedItems+ unverifiedItems;
+
 
  
   const handleRefresh = () => {
@@ -44,7 +66,7 @@ console.log("test daa", scrappedItems)
 
   return (
     <div>
-      {/* <Navbar totalQueries={totalQueries} onRefresh={handleRefresh} /> */}
+      <Navbar totalQueries={queryItem.queries} />
       <div className="flex">
         <div className="w-1/2 p-4">
           <ScrapeForm />
@@ -52,9 +74,9 @@ console.log("test daa", scrappedItems)
         <div className="w-1/2 p-4">
           {scrappedItems.data != null ?
           <ScraperStatus
-            // totalItems={totalItems}
-            // verifiedItems={verifiedItems}
-            // unverifiedItems={unverifiedItems}
+            totalItems={totalItems}
+            verifiedItems={verifiedItems}
+            unverifiedItems={unverifiedItems}
             scrappedItems={scrappedItems.data}
           /> : "No data yet"}
         </div>
