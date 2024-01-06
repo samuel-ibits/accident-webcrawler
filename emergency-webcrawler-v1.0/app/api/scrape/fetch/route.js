@@ -10,7 +10,7 @@ import TempoaryDB from "../../../../models/tempoary.js";
 export async function GET(request) {
   await connectMongoDB();
    const data= await TempoaryDB.find()
-  const queries = await QueryDB.countDocuments();
+  const queries = await TempoaryDB.countDocuments();
   return NextResponse.json({
     message: "fetched",
     queries: queries,

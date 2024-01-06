@@ -1,7 +1,6 @@
 "use client";
 import React, { useState } from "react";
 
-
 const ScraperStatus = ({
   scrappedItems,
   verifiedItems,
@@ -17,14 +16,42 @@ const ScraperStatus = ({
 
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
-  const handleAccept = (index) => {
-    // Implement logic for accepting an item
-    console.log("Accept item at index", index);
+  //update tempdb
+  const validate = async (id, data) => {
+    const { newStatus } = data;
+    alert(newStatus)
+    try {
+      const res = await fetch(`http://localhost:3000/api/scrape/${id}`, {
+        method: "PUT",
+        cache: "no-store",
+        headers: {
+          "Content-type": "application/json",
+        },
+        body: JSON.stringify({ newStatus }),
+      });
+      if (!res.ok) {
+        throw new Error("failed to update tempdb");
+      }
+      console.log("validate",res)
+      // alert(res)
+
+      return res.json();
+    } catch (error) {
+      console.log("errorloading tempdb", error);
+    }
   };
 
-  const handleReject = (index) => {
+  const handleAccept = async(index, id) => {
+    // Implement logic for accepting an item
+    const action = await validate(id, { newStatus: "Accepted" });
+    // alert("Accept item at index" + index + id + action);
+  };
+
+  const handleReject = async(index, id) => {
     // Implement logic for rejecting an item
-    console.log("Reject item at index", index);
+    const action = await validate(id, { newStatus: "Rejected" });
+
+    // alert("Reject item at index" + index + id + action);
   };
 
   return (
@@ -48,9 +75,7 @@ const ScraperStatus = ({
       <h2 className="text-xl font-semibold mb-2">Scrapped Items</h2>
 
       <ul>
-     
         {currentItems.map((item, index) => (
-       
           <li key={index} className="mb-4 p-4 border border-gray-300 rounded">
             <strong>Accident Type:</strong> {item.accidentType}
             <br />
@@ -65,21 +90,19 @@ const ScraperStatus = ({
             <div className="mt-2 flex items-center">
               <button
                 className="bg-green-500 text-white p-2 rounded mr-2"
-                onClick={() => handleAccept(index)}
+                onClick={() => handleAccept(index, item._id)}
               >
                 Accept
               </button>
               <button
                 className="bg-red-500 text-white p-2 rounded"
-                onClick={() => handleReject(index)}
+                onClick={() => handleReject(index, item._id)}
               >
                 Reject
               </button>
             </div>
           </li>
-          
         ))}
-      
       </ul>
 
       {/* Pagination */}
