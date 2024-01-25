@@ -1,0 +1,11 @@
+cd python
+
+python -m venv scrape_venv
+scrape_venv\Scripts\activate
+
+python -m pip freeze > requirments.txt
+
+
+python -m pip install -r requirments.txt
+
+python google.py
