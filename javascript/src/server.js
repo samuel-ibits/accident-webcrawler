@@ -7,6 +7,7 @@ const cheerio = require("cheerio");
 const tough = require("tough-cookie");
 const rateLimit = require("axios-rate-limit");
 const { randomDelay } = require("random-delay");
+const moment = require("moment");
 
 puppeteer.use(StealthPlugin());
 
@@ -30,6 +31,17 @@ const http = rateLimit(axios.create(), {
   maxRequests: 1,
   perMilliseconds: 1000,
 });
+function isDateInRange(reportDate, startDate, endDate) {
+  const reportDateTime = new Date(reportDate);
+  const startDateTime = startDate ? new Date(startDate) : null;
+  const endDateTime = endDate ? new Date(endDate) : null;
+
+  // Check if the report's date is within the specified range
+  return (
+    (!startDateTime || reportDateTime >= startDateTime) &&
+    (!endDateTime || reportDateTime <= endDateTime)
+  );
+}
 
 async function searchAndScrape(searchBase, query, startDate, endDate) {
   try {
@@ -98,8 +110,55 @@ async function searchAndScrape(searchBase, query, startDate, endDate) {
         const postContent = $(element).find(".post-content");
         const link = postContent.find(".post-title a").attr("href");
         const accidentType = postContent.find(".post-title a").text();
-        const date = postContent.find(".post-date").text();
+        const rawDate = postContent.find(".post-date").text();
         const details = postContent.find(".post-excerpt").text();
+        function reverseTimeDifference(relativeTimeString) {
+          const currentDate = new Date();
+
+          const match = relativeTimeString.match(/(\d+)\s+(\w+)\s+ago/);
+
+          if (!match) {
+            // Invalid or unsupported format
+            return null;
+          }
+
+          const [, amount, unit] = match;
+          const elapsedMilliseconds = calculateElapsedMilliseconds(
+            amount,
+            unit
+          );
+
+          const absoluteDate = new Date(
+            currentDate.getTime() - elapsedMilliseconds
+          );
+
+          // Format the absolute date
+          const formattedDate = absoluteDate.toLocaleDateString("en-US", {
+            month: "long",
+            day: "numeric",
+            year: "numeric",
+          });
+
+          return formattedDate;
+        }
+        function calculateElapsedMilliseconds(amount, unit) {
+          const unitsInMilliseconds = {
+            second: 1000,
+            minute: 60 * 1000,
+            hour: 60 * 60 * 1000,
+            day: 24 * 60 * 60 * 1000,
+            week: 7 * 24 * 60 * 60 * 1000,
+            month: 30 * 24 * 60 * 60 * 1000, // Assuming a month is 30 days
+            year: 365 * 24 * 60 * 60 * 1000, // Assuming a year is 365 days
+          };
+
+          // Convert unit to lowercase and remove any trailing 's'
+          const normalizedUnit = unit.toLowerCase().replace(/s$/, "");
+
+          return amount * (unitsInMilliseconds[normalizedUnit] || 0);
+        }
+
+        const date = reverseTimeDifference(rawDate);
 
         // Check if the report's date is within the specified range
         if (isDateInRange(date, startDate, endDate)) {
@@ -327,79 +386,181 @@ async function searchAndScrape(searchBase, query, startDate, endDate) {
       await page.setUserAgent(userAgent);
 
       // Navigate to the search page
-      await page.goto(searchUrl, { timeout: 4000000 });
+      await page.goto(searchUrl, { timeout: 120000 });
 
       // Wait for some time to simulate human-like behavior
       await page.waitForTimeout(randomDelay());
 
-      // Input the user's search query and wait for the results to load
-      await page.type(
-        'input[type="text"][placeholder="Search SowetanLIVE"]',
-        query
-      );
+      // Find the search input within the div with class "field"
+      const searchInputSelector =
+        '.field input[type="text"][placeholder="Search SowetanLIVE"]';
+      await page.type(searchInputSelector, query);
       await page.keyboard.press("Enter");
-      await page.waitForNavigation({ waitUntil: "domcontentloaded" });
 
+      // Wait for the results to load
+      const resultsSelector = ".results .result-set a.result";
+      await page.waitForSelector(resultsSelector, {
+        timeout: 120000,
+        visible: true,
+      });
+
+      // Fetch the results from the specified HTML structure
+      const reports = await page.evaluate(
+        (isDateInRangeString, startDate, endDate, resultsSelector) => {
+          const isDateInRange = new Function('return ' + isDateInRangeString)();
+          const reports = [];
+          const resultElements = document.querySelectorAll(resultsSelector);
+          resultElements.forEach((element) => {
+            const link = element.getAttribute("href");
+            const accidentType =
+              element.querySelector("h2")?.textContent?.trim() || "";
+            const rawDate =
+              element.querySelector(".date-stamp")?.textContent?.trim() || "";
+            const details =
+              element.querySelector("p")?.textContent?.trim() || "";
+
+            function reverseTimeDifference(relativeTimeString) {
+              const currentDate = new Date();
+
+              const match = relativeTimeString.match(/(\d+)\s+(\w+)\s+ago/);
+
+              if (!match) {
+                // Invalid or unsupported format
+                return null;
+              }
+
+              const [, amount, unit] = match;
+              const elapsedMilliseconds = calculateElapsedMilliseconds(
+                amount,
+                unit
+              );
+
+              const absoluteDate = new Date(
+                currentDate.getTime() - elapsedMilliseconds
+              );
+
+              // Format the absolute date
+              const formattedDate = absoluteDate.toLocaleDateString("en-US", {
+                month: "long",
+                day: "numeric",
+                year: "numeric",
+              });
+
+              return formattedDate;
+            }
+            function calculateElapsedMilliseconds(amount, unit) {
+              const unitsInMilliseconds = {
+                second: 1000,
+                minute: 60 * 1000,
+                hour: 60 * 60 * 1000,
+                day: 24 * 60 * 60 * 1000,
+                week: 7 * 24 * 60 * 60 * 1000,
+                month: 30 * 24 * 60 * 60 * 1000, // Assuming a month is 30 days
+                year: 365 * 24 * 60 * 60 * 1000, // Assuming a year is 365 days
+              };
+
+              // Convert unit to lowercase and remove any trailing 's'
+              const normalizedUnit = unit.toLowerCase().replace(/s$/, "");
+
+              return amount * (unitsInMilliseconds[normalizedUnit] || 0);
+            }
+
+            const date = reverseTimeDifference(rawDate);
+
+            if (isDateInRange(date, startDate, endDate)) {
+              reports.push({
+                accidentType,
+                date,
+                details,
+                location: "South Africa",
+                link: `https://www.sowetanlive.co.za${link}`,
+              });
+            }
+          });
+          return reports;
+        },
+        isDateInRange.toString(),
+        startDate,
+        endDate,
+        resultsSelector
+      );
+
+      // Close the browser
+      await browser.close();
+      console.log(reports);
+      return reports;
+    } 
+    else if (searchBase === "alive") {
+      const generateSearchUrl = (query) =>
+        `https://www.arrivealive.mobi/search?q=${encodeURIComponent(query)}`;
+    
+      const searchUrl = generateSearchUrl(query);
+    
+      const browser = await puppeteer.launch({ headless: true });
+      const page = await browser.newPage();
+      const userAgent = randomUseragent.getRandom();
+    
+      await page.setUserAgent(userAgent);
+    
+      // Increase navigation timeout
+      await page.goto(searchUrl, { timeout: 120000 });
+    
       // Wait for some time to simulate human-like behavior
       await page.waitForTimeout(randomDelay());
-
+    
       const html = await page.content();
       const $ = cheerio.load(html);
-
-      const accidentReports = $(".result");
-
+    
+      const accidentReports = $(".list-group-item");
+    
       let reports = [];
-
+    
       accidentReports.each((index, element) => {
-        const titleElement = $(element).find("h2");
-        const linkElement = $(element).find("a.result");
-        const link = linkElement.attr("href");
-        const accidentType = titleElement.text().trim();
-        const dateElement = $(element).find(".date-stamp");
-        const rawDate = dateElement.text();
-
-        // Convert the raw date to a human-readable format
-        const date = parseSowetanLiveDate(rawDate);
-
-        // Extract details
-        const detailsElement = $(element).find("p");
-        const details = detailsElement.text().trim();
-
+        const titleElement = $(element).find("h4 a");
+        const link = titleElement.attr("href");
+        const accidentType = titleElement.text();
+        const bylineElement = $(element).find(".byline");
+    
+        // Extract details from the first <p> element
+        const detailsElement = $(element).find("p").first();
+        let details = detailsElement.text().trim();
+    
+        // Extract the date after the first <b>...</b>
+        const dateMatch = detailsElement.contents().filter(function () {
+          return this.nodeType === 3; // Node.TEXT_NODE
+        }).text().match(/(\w{3} \d{1,2}, \d{4})/);
+    
+        const date = dateMatch ? dateMatch[0] : null;
+    
         // Check if the report's date is within the specified range
         if (isDateInRange(date, startDate, endDate)) {
-          // Add 'location: South Africa' property for reports from 'sowetanlive' search base
+          // Remove the date and dots from details
+          if (date) {
+            details = details.replace(date, "").replace("...", "").trim();
+          }
+    
+          // Add 'location: Nigeria' property for reports from 'daily' search base
           reports.push({
             accidentType,
             date,
             details,
-            location: "South Africa",
-            link: `https://www.sowetanlive.co.za${link}`, // Adjust the link format
+            location: "Nigeria",
+            link: `https://www.arrivealive.mobi${link}`,
           });
         }
       });
-
+    
       await browser.close();
-
+    
       return reports;
-    } else {
+    }
+    else {
       return [];
     }
   } catch (error) {
     console.error("Error:", error.message);
     return [];
   }
-}
-
-function isDateInRange(reportDate, startDate, endDate) {
-  const reportDateTime = new Date(reportDate);
-  const startDateTime = startDate ? new Date(startDate) : null;
-  const endDateTime = endDate ? new Date(endDate) : null;
-
-  // Check if the report's date is within the specified range
-  return (
-    (!startDateTime || reportDateTime >= startDateTime) &&
-    (!endDateTime || reportDateTime <= endDateTime)
-  );
 }
 
 app.get("/search", async (req, res) => {
