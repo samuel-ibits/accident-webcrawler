@@ -586,31 +586,29 @@ async function searchAndScrape(searchBase, query, startDate, endDate) {
 
       console.log("Returning 'reports' array");
       return reports;
-    }
-    
-    else if (searchBase === "sowetanlive") {
+    } else if (searchBase === "sowetanlive") {
       const searchUrl = "https://www.sowetanlive.co.za/";
-    
+
       const browser = await puppeteer.launch({ headless: true });
       const page = await browser.newPage();
       const userAgent = randomUseragent.getRandom();
-    
+
       await page.setUserAgent(userAgent);
-    
+
       // Navigate to the search page
       await page.goto(searchUrl, { timeout: 120000 });
-    
+
       // Wait for some time to simulate human-like behavior
       await page.waitForTimeout(randomDelay());
-    
+
       // Find the search input within the div with class "field"
       const searchInputSelector =
         '.field input[type="text"][placeholder="Search SowetanLIVE"]';
       await page.type(searchInputSelector, query);
       await page.keyboard.press("Enter");
-    
+
       let reports = [];
-    
+
       while (true) {
         // Wait for the results to load
         const resultsSelector = ".results .result-set a.result";
@@ -618,11 +616,13 @@ async function searchAndScrape(searchBase, query, startDate, endDate) {
           timeout: 120000,
           visible: true,
         });
-    
+
         // Fetch the results from the specified HTML structure
         const newReports = await page.evaluate(
           (isDateInRangeString, startDate, endDate, resultsSelector) => {
-            const isDateInRange = new Function("return " + isDateInRangeString)();
+            const isDateInRange = new Function(
+              "return " + isDateInRangeString
+            )();
             const newReports = [];
             const resultElements = document.querySelectorAll(resultsSelector);
             resultElements.forEach((element) => {
@@ -633,34 +633,34 @@ async function searchAndScrape(searchBase, query, startDate, endDate) {
                 element.querySelector(".date-stamp")?.textContent?.trim() || "";
               const details =
                 element.querySelector("p")?.textContent?.trim() || "";
-    
+
               function reverseTimeDifference(relativeTimeString) {
                 const currentDate = new Date();
-    
+
                 const match = relativeTimeString.match(/(\d+)\s+(\w+)\s+ago/);
-    
+
                 if (!match) {
                   // Invalid or unsupported format
                   return null;
                 }
-    
+
                 const [, amount, unit] = match;
                 const elapsedMilliseconds = calculateElapsedMilliseconds(
                   amount,
                   unit
                 );
-    
+
                 const absoluteDate = new Date(
                   currentDate.getTime() - elapsedMilliseconds
                 );
-    
+
                 // Format the absolute date
                 const formattedDate = absoluteDate.toLocaleDateString("en-US", {
                   month: "long",
                   day: "numeric",
                   year: "numeric",
                 });
-    
+
                 return formattedDate;
               }
               function calculateElapsedMilliseconds(amount, unit) {
@@ -673,15 +673,15 @@ async function searchAndScrape(searchBase, query, startDate, endDate) {
                   month: 30 * 24 * 60 * 60 * 1000, // Assuming a month is 30 days
                   year: 365 * 24 * 60 * 60 * 1000, // Assuming a year is 365 days
                 };
-    
+
                 // Convert unit to lowercase and remove any trailing 's'
                 const normalizedUnit = unit.toLowerCase().replace(/s$/, "");
-    
+
                 return amount * (unitsInMilliseconds[normalizedUnit] || 0);
               }
-    
+
               const date = reverseTimeDifference(rawDate);
-    
+
               if (isDateInRange(date, startDate, endDate)) {
                 newReports.push({
                   accidentType,
@@ -699,9 +699,9 @@ async function searchAndScrape(searchBase, query, startDate, endDate) {
           endDate,
           resultsSelector
         );
-    
+
         reports.push(...newReports);
-    
+
         // Click the "More" button
         const moreButton = await page.$('a[rel="2"]');
         if (moreButton) {
@@ -710,75 +710,72 @@ async function searchAndScrape(searchBase, query, startDate, endDate) {
           break; // No more "More" button found, exit the loop
         }
       }
-    
+
       // Close the browser
       await browser.close();
       return reports;
-    }
-    
-    
-    else if (searchBase === "alive") {
+    } else if (searchBase === "alive") {
       const generateSearchUrl = (query) =>
         `https://www.arrivealive.mobi/search?q=${encodeURIComponent(query)}`;
-    
+
       const browser = await puppeteer.launch({ headless: true });
       console.log("Browser launched successfully.");
       const page = await browser.newPage();
       console.log("New page created.");
       const userAgent = randomUseragent.getRandom();
-    
+
       await page.setUserAgent(userAgent);
       console.log(`User agent set to: ${userAgent}`);
-    
+
       // Increase navigation timeout
       await page.setDefaultNavigationTimeout(300000); // 5 minutes timeout
-    
+
       let reports = [];
       let currentPage = 1;
-    
+
       console.log(`Navigating to the search page...`);
       const searchUrl = generateSearchUrl(query);
       await page.goto(searchUrl);
       console.log(`Navigated to the search page.`);
-    
+
       while (true) {
         // Wait for some time to simulate human-like behavior
         console.log("Waiting for a moment...");
         await page.waitForTimeout(randomDelay());
-    
+
         const html = await page.content();
         const $ = cheerio.load(html);
-    
+
         const accidentReports = $(".list-group-item");
         console.log(
           `Found ${accidentReports.length} accident reports on the current page.`
         );
-    
+
         for (const element of accidentReports) {
           const titleElement = $(element).find("h4 a");
           const link = titleElement.attr("href");
           const accidentType = titleElement.text();
           const bylineElement = $(element).find(".byline");
-    
+
           // Extract details from the first <p> element
           const detailsElement = $(element).find("p").first();
           let details = detailsElement.text().trim();
-    
+
           // Extract the date after the first <b>...</b>
           const dateMatch = detailsElement
             .find(".byline")
             .text()
             .match(/(\w{3} \d{1,2}, \d{4})/);
-    
+
           const date = dateMatch ? dateMatch[0] : null;
-    
+
           // Check if the report's date is within the specified range
           if (isDateInRange(date, startDate, endDate)) {
             // Remove the date and dots from details
             if (date) {
               details = details.replace(date, "").replace("...", "").trim();
             }
-    
+
             // Open the linked page to fetch the date
             try {
               const linkedPage = await browser.newPage();
@@ -788,7 +785,7 @@ async function searchAndScrape(searchBase, query, startDate, endDate) {
                 (element) => element.textContent.trim().split(" - ")[0]
               );
               await linkedPage.close();
-    
+
               // Add 'location: Nigeria' property for reports from 'daily' search base
               reports.push({
                 accidentType,
@@ -803,22 +800,24 @@ async function searchAndScrape(searchBase, query, startDate, endDate) {
             }
           }
         }
-    
+
         // Check if there's a 'Next' button on the page
         const nextPageButton = await page.$("a.pull-right");
-    
+
         if (nextPageButton) {
           console.log(`Navigating to the next page...`);
-    
+
           // Get the current page number
           const currentPageNumber = await page.evaluate(() => {
             const nextPageButton = document.querySelector("a.pull-right");
-            return nextPageButton ? nextPageButton.getAttribute("data-page") : null;
+            return nextPageButton
+              ? nextPageButton.getAttribute("data-page")
+              : null;
           });
-    
+
           // Click the "Next" button
           await nextPageButton.click();
-    
+
           try {
             // Wait for the page number to change with a longer timeout
             await page.waitForFunction(
@@ -836,7 +835,7 @@ async function searchAndScrape(searchBase, query, startDate, endDate) {
             console.log("Timeout reached. Returning scraped reports so far.");
             break; // Break out of the loop when timeout is reached
           }
-    
+
           console.log(`Navigated to next page.`);
           currentPage++;
         } else {
@@ -844,16 +843,69 @@ async function searchAndScrape(searchBase, query, startDate, endDate) {
           break;
         }
       }
-    
+
       console.log("Browser closed.");
       await browser.close();
-    
+
       return reports;
     }
     
-    
-    
-    else {
+    else if (searchBase === "africanews") {
+      const searchUrl = `https://www.africanews.com/search/${encodeURIComponent(
+        query
+      )}`;
+
+      const browser = await puppeteer.launch({ headless: true });
+      const page = await browser.newPage();
+      const userAgent = randomUseragent.getRandom();
+
+      await page.setUserAgent(userAgent);
+
+      // Navigate to the search page
+      await page.goto(searchUrl, { timeout: 120000 });
+
+      // Wait for some time to simulate human-like behavior
+      await page.waitForTimeout(randomDelay());
+
+      // Function to extract data from each article
+      const extractData = async () => {
+        const data = await page.evaluate(() => {
+          const articles = document.querySelectorAll(".teaser.news");
+          const extractedData = [];
+          
+          articles.forEach((article) => {
+            const linkElement = article.querySelector("h2.teaser__title.u-mt0 a");
+            const link = linkElement ? linkElement.getAttribute("href") : null;
+            const accidentType = linkElement ? linkElement.textContent : null;
+            
+            const descriptionElement = article.querySelector("p.teaser__description a");
+            const details = descriptionElement ? descriptionElement.textContent.trim() : null;
+            
+            const dateElement = article.querySelector("time.article__date");
+            const date =  dateElement.getAttribute("datetime");
+      
+            extractedData.push({
+              link: link ? `https://www.africanews.com${link}` : null, 
+              accidentType,
+              details,
+              date,
+              location:'Location'
+            });
+          });
+      
+          return extractedData;
+        });
+        
+        return data;
+      };
+      // Extract data from the current page
+      const reports = await extractData();
+
+      // Close the browser
+      await browser.close();
+      return reports;
+    }
+     else {
       return [];
     }
   } catch (error) {
