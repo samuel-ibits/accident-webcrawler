@@ -23,27 +23,23 @@ export default function ScrapeForm() {
       ...prevState,
       [fieldName]: fieldValue,
     }));
+
+       JSON.stringify(formData);
+
   };
 
   const submitForm = (e) => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    const formURL = "http://localhost:3000/api/scrape";
-    const data = new FormData();
-
-    Object.entries(formData).forEach(([key, value]) => {
-      data.append(key, value);
-    });
-
-    console.log(data);
+    // alert(JSON.stringify(formData));
+    const formURL = "http://localhost:3000/api/scrape/run";
 
     fetch(formURL, {
       method: "POST",
-      body: "hello",
+      body: JSON.stringify(formData),
       headers: {
-        // accept: "application/x-www-form-urlencoded",
-        accept: "application/json",
+        "Content-Type": "application/json",
       },
     })
       .then((response) => response.json())
@@ -57,11 +53,9 @@ export default function ScrapeForm() {
         });
 
         setFormSuccess(true);
-        setFormSuccessMessage(data.submission_text);
-        console.log(data);
+        setFormSuccessMessage(data.message);
       })
       .catch((error) => {
-        // console.log("Error submitting form:", error);
         console.error("Error submitting form:", error);
         // Handle error state or display an error message to the user
       })
@@ -69,7 +63,6 @@ export default function ScrapeForm() {
         setIsSubmitting(false);
       });
   };
-
   return (
     <div className="max-w-md mx-auto mt-8 p-8 bg-white shadow-md rounded-lg">
       <h1 className="text-3xl text-gray-800 font-semibold mb-6">
@@ -80,7 +73,7 @@ export default function ScrapeForm() {
       </p>
 
       {formSuccess ? (
-        <div className="bg-green-100 border-l-4 border-green-500 p-4 mb-6">
+        <div className="text-gray-600 bg-green-100 border-l-4 border-green-500 p-4 mb-6">
           {formSuccessMessage}
         </div>
       ) : (
@@ -99,9 +92,15 @@ export default function ScrapeForm() {
               value={formData.searchBase}
               className="text-gray-600 mt-1 p-2 border border-gray-300 rounded-md w-full focus:outline-none focus:ring focus:border-blue-500"
             >
-              <option value="">Select Search Base</option>
-              <option value="google.com">Google.com</option>
-              <option value="abc.com">ABC.com</option>
+              <option value="test">Select Search Base</option>
+              <option value="google">Google.com</option>
+              <option value="vanguard">Vanguard News</option>
+              <option value="punch">Punch newspaper</option>
+              <option value="daily">Daily trust</option>
+              <option value="guyana">News Room Guyana</option>
+              <option value="ewn">Ewn Traffic</option>
+              <option value="sowetanlive">Sowetanlive</option>
+
               {/* Add more options as needed */}
             </select>
           </div>
@@ -124,8 +123,8 @@ export default function ScrapeForm() {
               <option value="flood">Flood</option>
               <option value="fire">Fire</option>
               <option value="roadAccident">Road Accident</option>
-              <option value="other">Other</option>
               <option value="all">All</option>
+              <option value="other">Other</option>
             </select>
           </div>
 

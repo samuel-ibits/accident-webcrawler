@@ -7,11 +7,12 @@ const tempoarySchema = new Schema(
     dateOfOccurance: { type: String },
     timeOfOcccurance: { type: String },
     accidentDetails: { type: String },
+    status: { type: String },
   },
   {
     timestamps: true,
   }
 );
 const TempoaryDB =
-  mongoose.models.QueryDB || mongoose.model("TempoaryDB", tempoarySchema);
+  mongoose.models.TempoaryDB || mongoose.model("TempoaryDB", tempoarySchema);
 export default TempoaryDB;
