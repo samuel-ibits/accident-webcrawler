@@ -1,0 +1,5 @@
+python -m venv /path/to/new/virtual/environment
+
+py -m venv .venv
+
+.venv\Scripts\activate

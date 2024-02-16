@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
 export default function ScrapeForm() {
   const [formData, setFormData] = useState({
@@ -24,9 +24,68 @@ export default function ScrapeForm() {
       [fieldName]: fieldValue,
     }));
 
-       JSON.stringify(formData);
+    JSON.stringify(formData);
 
   };
+  const fetchData = async (token) => {
+    const endpoint = 'https://dev.mysecureview.com/api/live/incident_categories'; 
+    
+    try {
+      const response = await fetch(endpoint, {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+      });
+  
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+  
+      const data = await response.json();
+      console.log(data)
+      return data;
+    } catch (error) {
+      console.error('Error fetching data:', error);
+      return null;
+    }
+  };
+  
+  const [options, setOptions] = useState([]);
+  const [selectedOption, setSelectedOption] = useState('');
+
+  useEffect(() => {
+    const token = process.env.NEXT_PUBLIC_SECURE_VIEW_BEARER_TOKEN; // Retrieve the token from environment variable
+  
+    if (!token) {
+      console.error('Bearer token not found in environment variable.');
+      
+      return;
+    }
+   
+  
+    fetchData(token)
+      .then(data => {
+        if (data) {
+          console.log('Data fetched successfully:', data);
+          setOptions(data);
+         
+        } else {
+          console.error('No data received from the API.');
+        }
+      })
+      .catch(error => {
+        console.error('Error fetching data from the API:', error);
+      });
+  }, []);
+
+  const handleSelectChange = (e) => {
+    setSelectedOption(e.target.value);
+  };
+
+
+
 
   const submitForm = (e) => {
     e.preventDefault();
@@ -75,6 +134,10 @@ export default function ScrapeForm() {
       {formSuccess ? (
         <div className="text-gray-600 bg-green-100 border-l-4 border-green-500 p-4 mb-6">
           {formSuccessMessage}
+          <button
+          type="button"
+          className={`bg-blue-500 text-white p-3 rounded-md `}
+          onClick={setFormSuccess(false)}>New Request</button>
         </div>
       ) : (
         <form onSubmit={submitForm}>
@@ -110,22 +173,24 @@ export default function ScrapeForm() {
               htmlFor="emergencyType"
               className="block text-sm font-medium text-gray-600"
             >
-              Emergency Type
+               Incident Category
             </label>
-            <select
-              id="emergencyType"
-              name="emergencyType"
-              onChange={handleInput}
+         
+
+            <select 
+            id="emergencyType"
+            name="emergencyType"
+            onChange={handleInput}
               value={formData.emergencyType}
-              className="text-gray-600 mt-1 p-2 border border-gray-300 rounded-md w-full focus:outline-none focus:ring focus:border-blue-500"
+            className="text-gray-600 mt-1 p-2 border border-gray-300 rounded-md w-full focus:outline-none focus:ring focus:border-blue-500"
             >
-              <option value="">Select Emergency Type</option>
-              <option value="flood">Flood</option>
-              <option value="fire">Fire</option>
-              <option value="roadAccident">Road Accident</option>
-              <option value="all">All</option>
-              <option value="other">Other</option>
+              <option value="">Select an option</option>
+              {options.map((option, index) => (
+                <option key={index} value={option.name}>{option.name}</option>
+              ))}
             </select>
+
+
           </div>
 
           <div className="mb-6">
@@ -180,9 +245,8 @@ export default function ScrapeForm() {
 
           <button
             type="submit"
-            className={`bg-blue-500 text-white p-3 rounded-md ${
-              isSubmitting ? "opacity-50 cursor-not-allowed" : ""
-            }`}
+            className={`bg-blue-500 text-white p-3 rounded-md ${isSubmitting ? "opacity-50 cursor-not-allowed" : ""
+              }`}
             disabled={isSubmitting}
           >
             {isSubmitting ? "Starting Scrapping..." : "Start Scrapping"}

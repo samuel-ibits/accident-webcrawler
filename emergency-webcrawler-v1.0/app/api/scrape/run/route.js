@@ -36,7 +36,7 @@ export async function POST(request) {
     specialParameters,
   });
 
-  return NextResponse.json({ message: "created" }, { status: 201 });
+  return NextResponse.json({ message: "Sent Request to Background Crawler" }, { status: 201 });
 }
 
 // Handles GET requests to /api
