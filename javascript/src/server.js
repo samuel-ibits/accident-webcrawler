@@ -46,6 +46,7 @@ function isDateInRange(reportDate, startDate, endDate) {
 async function searchAndScrape(searchBase, query, startDate, endDate) {
   try {
     let searchUrl = "";
+
     if (searchBase === "vanguard") {
       let searchUrl = `https://thecurrent.pk/?s=${query}`;
       let pageNumber = 1;
@@ -69,39 +70,44 @@ async function searchAndScrape(searchBase, query, startDate, endDate) {
       const pageInfoText = $(
         ".jeg_navigation.jeg_pagination .page_info"
       ).text();
-      maxPages = parseInt(pageInfoText.split(" ").pop()) || maxPages; // Use the default if not found
+      const maxPages = parseInt(pageInfoText.split(" ").pop()) || 1; // Use 1 if not found
 
       let accidentReports = $(".jeg_post.jeg_pl_md_2.format-standard");
 
       // Check if there are more pages of results
-      const nextPageButton = $(
-        ".jeg_navigation.jeg_pagination a.page_nav.next"
-      );
-      if (nextPageButton.length > 0) {
-        pageNumber++;
+      if (maxPages > 1) {
+        const nextPageButton = $(
+          ".jeg_navigation.jeg_pagination a.page_nav.next"
+        );
 
-        // Keep fetching results from the next pages
-        while (pageNumber <= maxPages) {
-          searchUrl = `https://thecurrent.pk/page/${pageNumber}/?s=${query}`;
-
-          await page.goto(searchUrl, { timeout: 60000 });
-          await page.waitForTimeout(randomDelay());
-
-          const html = await page.content();
-          const $ = cheerio.load(html);
-
-          const newAccidentReports = $(".jeg_post.jeg_pl_md_2.format-standard");
-          accidentReports = accidentReports.add(newAccidentReports);
-
-          // Check if there are more pages
-          const nextPageButton = $(
-            ".jeg_navigation.jeg_pagination a.page_nav.next"
-          );
-          if (nextPageButton.length === 0) {
-            break;
-          }
-
+        if (nextPageButton.length > 0) {
           pageNumber++;
+
+          // Keep fetching results from the next pages
+          while (pageNumber <= maxPages) {
+            searchUrl = `https://thecurrent.pk/page/${pageNumber}/?s=${query}`;
+
+            await page.goto(searchUrl, { timeout: 60000 });
+            await page.waitForTimeout(randomDelay());
+
+            const html = await page.content();
+            const $ = cheerio.load(html);
+
+            const newAccidentReports = $(
+              ".jeg_post.jeg_pl_md_2.format-standard"
+            );
+            accidentReports = accidentReports.add(newAccidentReports);
+
+            // Check if there are more pages
+            const nextPageButton = $(
+              ".jeg_navigation.jeg_pagination a.page_nav.next"
+            );
+            if (nextPageButton.length === 0) {
+              break;
+            }
+
+            pageNumber++;
+          }
         }
       }
 
@@ -121,6 +127,10 @@ async function searchAndScrape(searchBase, query, startDate, endDate) {
 
       await browser.close();
 
+      if (reports.length === 0) {
+        return "No results found.";
+      }
+
       return reports;
     } else if (searchBase === "punch") {
       console.log("Searching Punchng for", query);
@@ -135,146 +145,154 @@ async function searchAndScrape(searchBase, query, startDate, endDate) {
       const browser = await puppeteer.launch({ headless: true });
       console.log("Browser launched");
 
-      // Open a new page
-      const page = await browser.newPage();
-      console.log("Page created");
+      try {
+        // Open a new page
+        const page = await browser.newPage();
+        console.log("Page created");
 
-      // Get a random user agent to simulate different browsers
-      const userAgent = randomUseragent.getRandom();
+        // Get a random user agent to simulate different browsers
+        const userAgent = randomUseragent.getRandom();
 
-      // Set the user agent
-      await page.setUserAgent(userAgent);
-      console.log("User agent set");
+        // Set the user agent
+        await page.setUserAgent(userAgent);
+        console.log("User agent set");
 
-      // Initialize search URL
-      const searchUrl = `https://punchng.com/?s=${query}`;
+        // Initialize search URL
+        const searchUrl = `https://punchng.com/?s=${query}`;
 
-      // Visit the search page
-      await page.goto(searchUrl, { timeout: 120000 });
-      console.log("Search page loaded");
+        // Visit the search page
+        await page.goto(searchUrl, { timeout: 120000 });
+        console.log("Search page loaded");
 
-      // Wait for a random delay
-      await page.waitForTimeout(randomDelay());
+        // Wait for a random delay
+        await page.waitForTimeout(randomDelay());
 
-      // Get the HTML content
-      let html = await page.content();
+        // Get the HTML content
+        let html = await page.content();
 
-      // Load the HTML content using cheerio
-      let $ = cheerio.load(html);
+        // Load the HTML content using cheerio
+        let $ = cheerio.load(html);
 
-      // Extract the maximum page number from the pagination
-      const maxPageInfo = $(".pagination").find(".page-item:last-child").prev();
-      const maxPage = parseInt(maxPageInfo.text());
-      console.log("Max page:", maxPage);
+        // Extract the maximum page number from the pagination
+        const maxPageInfo = $(".pagination")
+          .find(".page-item:last-child")
+          .prev();
+        const maxPage = parseInt(maxPageInfo.text());
+        console.log("Max page:", maxPage);
 
-      // Start scraping the pages
-      do {
-        if (pageNumber > 1) {
-          // Visit the next page
-          await page.goto(
-            `https://punchng.com/page/${pageNumber}/?s=${query}`,
-            { timeout: 900000 }
-          ); // Increased timeout to 5 minutes
-          console.log(`Page ${pageNumber} loaded`);
+        // Start scraping the pages
+        do {
+          if (pageNumber > 1) {
+            // Visit the next page
+            await page.goto(
+              `https://punchng.com/page/${pageNumber}/?s=${query}`,
+              { timeout: 900000 }
+            ); // Increased timeout to 5 minutes
+            console.log(`Page ${pageNumber} loaded`);
 
-          // Wait for the specific article element to be present on the page
-          await page.waitForXPath("//article");
+            // Wait for the specific article element to be present on the page
+            await page.waitForXPath("//article");
 
-          // Update the HTML content for the new page
-          html = await page.content();
+            // Update the HTML content for the new page
+            html = await page.content();
 
-          // Load the new HTML content using cheerio
-          $ = cheerio.load(html);
-        }
+            // Load the new HTML content using cheerio
+            $ = cheerio.load(html);
+          }
 
-        $("article").each((index, element) => {
-          // Iterate over each article on the current page
-          const postContent = $(element).find(".post-content");
+          $("article").each((index, element) => {
+            // Iterate over each article on the current page
+            const postContent = $(element).find(".post-content");
 
-          // Extract the accident type
-          const accidentType = postContent.find(".post-title a").text();
+            // Extract the accident type
+            const accidentType = postContent.find(".post-title a").text();
 
-          // Extract the article link
-          const link = postContent.find(".post-title a").attr("href");
+            // Extract the article link
+            const link = postContent.find(".post-title a").attr("href");
 
-          // Extract the raw date and convert it to a JavaScript Date object
-          const rawDate = postContent.find(".post-date").text().trim();
+            // Extract the raw date and convert it to a JavaScript Date object
+            const rawDate = postContent.find(".post-date").text().trim();
 
-          function reverseTimeDifference(relativeTimeString) {
-            const currentDate = new Date();
+            function reverseTimeDifference(relativeTimeString) {
+              const currentDate = new Date();
 
-            const match = relativeTimeString.match(/(\d+)\s+(\w+)\s+ago/);
+              const match = relativeTimeString.match(/(\d+)\s+(\w+)\s+ago/);
 
-            if (!match) {
-              // Invalid or unsupported format
-              return null;
+              if (!match) {
+                // Invalid or unsupported format
+                return null;
+              }
+
+              const [, amount, unit] = match;
+              const elapsedMilliseconds = calculateElapsedMilliseconds(
+                amount,
+                unit
+              );
+
+              const absoluteDate = new Date(
+                currentDate.getTime() - elapsedMilliseconds
+              );
+
+              // Format the absolute date
+              const formattedDate = absoluteDate.toLocaleDateString("en-US", {
+                month: "long",
+                day: "numeric",
+                year: "numeric",
+              });
+
+              return formattedDate;
             }
 
-            const [, amount, unit] = match;
-            const elapsedMilliseconds = calculateElapsedMilliseconds(
-              amount,
-              unit
-            );
+            function calculateElapsedMilliseconds(amount, unit) {
+              const unitsInMilliseconds = {
+                second: 1000,
+                minute: 60 * 1000,
+                hour: 60 * 60 * 1000,
+                day: 24 * 60 * 60 * 1000,
+                week: 7 * 24 * 60 * 60 * 1000,
+                month: 30 * 24 * 60 * 60 * 1000, // Assuming a month is 30 days
+                year: 365 * 24 * 60 * 60 * 1000, // Assuming a year is 365 days
+              };
 
-            const absoluteDate = new Date(
-              currentDate.getTime() - elapsedMilliseconds
-            );
+              // Convert unit to lowercase and remove any trailing 's'
+              const normalizedUnit = unit.toLowerCase().replace(/s$/, "");
 
-            // Format the absolute date
-            const formattedDate = absoluteDate.toLocaleDateString("en-US", {
-              month: "long",
-              day: "numeric",
-              year: "numeric",
-            });
+              return amount * (unitsInMilliseconds[normalizedUnit] || 0);
+            }
 
-            return formattedDate;
-          }
+            const date = reverseTimeDifference(rawDate);
 
-          function calculateElapsedMilliseconds(amount, unit) {
-            const unitsInMilliseconds = {
-              second: 1000,
-              minute: 60 * 1000,
-              hour: 60 * 60 * 1000,
-              day: 24 * 60 * 60 * 1000,
-              week: 7 * 24 * 60 * 60 * 1000,
-              month: 30 * 24 * 60 * 60 * 1000, // Assuming a month is 30 days
-              year: 365 * 24 * 60 * 60 * 1000, // Assuming a year is 365 days
-            };
+            // Extract the details of the accident
+            const details = postContent.find(".post-excerpt").text().trim();
 
-            // Convert unit to lowercase and remove any trailing 's'
-            const normalizedUnit = unit.toLowerCase().replace(/s$/, "");
+            // Check if the date is within the specified range
+            if (isDateInRange(date, startDate, endDate)) {
+              // Push the extracted information into the reports array
+              reports.push({
+                accidentType,
+                date,
+                details,
+                location: "Nigeria",
+                link,
+              });
+            }
+          });
 
-            return amount * (unitsInMilliseconds[normalizedUnit] || 0);
-          }
+          // Increment the page number
+          pageNumber++;
+        } while (pageNumber <= maxPage); // Continue until the last page is reached
 
-          const date = reverseTimeDifference(rawDate);
+        console.log("All pages scraped");
+      } catch (error) {
+        console.error(`Error: ${error.message}`);
+      } finally {
+        // Close the browser when done or if there's an error
+        await browser.close();
+        console.log("Browser closed");
+      }
 
-          // Extract the details of the accident
-          const details = postContent.find(".post-excerpt").text().trim();
-
-          // Check if the date is within the specified range
-          if (isDateInRange(date, startDate, endDate)) {
-            // Push the extracted information into the reports array
-            reports.push({
-              accidentType,
-              date,
-              details,
-              location: "Nigeria",
-              link,
-            });
-          }
-        });
-
-        // Increment the page number
-        pageNumber++;
-      } while (pageNumber <= maxPage); // Continue until the last page is reached
-
-      console.log("All pages scraped");
-
-      // Close the browser when done
-      await browser.close();
-
-      console.log("Browser closed");
+      // Display the number of results fetched so far
+      console.log("Number of results fetched so far:", reports.length);
 
       // Return the array of reports
       return reports;
@@ -286,9 +304,7 @@ async function searchAndScrape(searchBase, query, startDate, endDate) {
         )}&gsc.sort=&gsc.page=${page}`;
 
       // Fetch the HTML content from the URL
-      const url = `https://dailytrust.com/search/#gsc.tab=0&gsc.q=${encodeURIComponent(
-        query
-      )}&gsc.sort=`;
+      const url = generateSearchUrl(query, 1);
       const browser = await puppeteer.launch({ headless: true });
       const page = await browser.newPage();
       await page.goto(url, { timeout: 120000 });
@@ -307,18 +323,8 @@ async function searchAndScrape(searchBase, query, startDate, endDate) {
 
       // Fetch all pages of search results in parallel using Promise.all()
       const promises = urls.map(async (url) => {
-        // Launch a headless Puppeteer browser and create a new page
-        const browser = await puppeteer.launch({ headless: true });
-        const page = await browser.newPage();
-
-        // Set a random user agent to simulate human-like behavior
-        const userAgent = randomUseragent.getRandom();
-        await page.setUserAgent(userAgent);
-
-        // Increase navigation timeout to avoid timeouts on slow pages
+        // Navigate to the new URL using the existing page instance
         await page.goto(url, { timeout: 120000 });
-
-        // Wait for some time to simulate human-like behavior
         await page.waitForTimeout(randomDelay());
 
         // Load the HTML content of the page
@@ -370,17 +376,23 @@ async function searchAndScrape(searchBase, query, startDate, endDate) {
           }
         });
 
-        // Close the Puppeteer browser
-        browser.close();
-
         // Return the extracted reports from the current page
         return reports;
       });
 
       // Wait for all promises to resolve and flatten the results into a single array
-      return Promise.all(promises).then((results) => {
+      const allReports = await Promise.all(promises).then((results) => {
         return results.flat();
       });
+
+      // Close the Puppeteer browser after fetching all pages
+      await browser.close();
+
+      if (allReports.length === 0) {
+        return "No results found.";
+      }
+
+      return allReports;
     } else if (searchBase === "guyana") {
       const generateSearchUrl = (query, pageNumber) =>
         `https://guyanatimesgy.com/page/${pageNumber}/?s=${query}`;
@@ -482,98 +494,123 @@ async function searchAndScrape(searchBase, query, startDate, endDate) {
 
       return reports;
     } else if (searchBase === "ewn") {
-      const generateSearchUrl = (query, pageNumber) =>
-        `https://ewn.co.za/searchresultspage?searchTerm=${query}&type=All&sortBy=Relevance&pagenumber=${pageNumber}&perPage=18`;
+      const searchUrl = "https://www.ewn.co.za/search";
 
-      console.log("generateSearchUrl function defined");
+      console.log("Search URL defined");
 
       let reports = [];
-      console.log("reports array initialized");
-
-      let pageNumber = 1;
-      console.log("pageNumber variable initialized with value 1");
+      console.log("Reports array initialized");
 
       const browser = await puppeteer.launch({ headless: true });
       console.log("Browser launched successfully");
 
+      let detailsPage; // Declare detailsPage outside the try block
+
       try {
-        console.log("Starting while loop");
-        while (true) {
-          console.log(`Page number: ${pageNumber}`);
-          const searchUrl = generateSearchUrl(query, pageNumber);
-          console.log(`Fetching data from: ${searchUrl}`);
+        const page = await browser.newPage();
+        console.log("New page created");
 
-          const page = await browser.newPage();
-          console.log("New page created");
+        const userAgent = randomUseragent.getRandom();
+        await page.setUserAgent(userAgent);
+        console.log("User agent set");
 
-          const userAgent = randomUseragent.getRandom();
-          await page.setUserAgent(userAgent);
-          console.log("User agent set");
+        const pageUrl = `${searchUrl}?page=1`; // Assuming the results are on the first page
+        console.log(`Fetching data from: ${pageUrl}`);
 
-          await page.goto(searchUrl, { timeout: 120000 });
-          console.log("Page loaded successfully");
+        await page.goto(pageUrl, {
+          waitUntil: "networkidle0",
+          timeout: 120000,
+        });
+        console.log("Page loaded successfully");
 
-          await page.waitForTimeout(randomDelay());
-          const html = await page.content();
-          await page.close();
-          console.log("Page content extracted successfully");
+        // Input the search query and wait for a few seconds before fetching results
+        const searchInputSelector =
+          ".flex-1.border-none.bg-surface-03.text-sm.font-medium.text-content-primary.outline-none";
+        await page.type(searchInputSelector, query);
+        console.log("Search query entered");
 
-          const $ = cheerio.load(html);
-          const accidentReports = $(".article-short");
-          console.log(`${accidentReports.length} accident reports found`);
+        // Adding a delay of 30 seconds (adjust as needed)
+        await page.waitForTimeout(30000);
 
-          accidentReports.each(async (index, element) => {
-            console.log(`Processing accident report ${index + 1}`);
-            // Extract the accident details and add them to the 'reports' array
-            const titleElement = $(element).find(".article-short h4");
-            const linkElement = $(element).find(".article-short a");
-            const link = linkElement.attr("href");
-            const accidentType = titleElement.text();
-            const dateElement = $(element).find(".byline abbr");
-            const rawDate = dateElement.attr("title");
+        console.log("Fetching results...");
 
-            console.log(`accidentType: ${accidentType}`);
-            console.log(`link: ${link}`);
+        const resultsSelector =
+          "article.grid.col-span-2.grid-cols-12.transition-colors";
+        await page.waitForSelector(resultsSelector, { timeout: 120000 });
+        console.log("Results loaded successfully");
 
-            // Convert the raw date to a human-readable format
-            const date = new Date(rawDate).toLocaleDateString("en-US", {
-              month: "long",
-              day: "numeric",
-              year: "numeric",
+        const html = await page.content();
+        const $ = cheerio.load(html);
+
+        const accidentReports = $(resultsSelector);
+        console.log(`${accidentReports.length} accident reports found`);
+
+        // Iterate over each report on the page
+        for (let index = 0; index < accidentReports.length; index++) {
+          // Extract and process details for each report
+          const accidentType = $(accidentReports[index])
+            .find("h3 a")
+            .text()
+            .trim();
+          const detailsUrl = $(accidentReports[index])
+            .find("h3 a")
+            .attr("href");
+          const link = "https://www.ewn.co.za/" + detailsUrl;
+
+          // Open the link and extract the date and details
+          try {
+            detailsPage = await browser.newPage();
+            await detailsPage.goto(link, {
+              waitUntil: "networkidle0",
+              timeout: 60000,
             });
 
-            console.log(`date: ${date}`);
+            const dateHTML = await detailsPage.evaluate(() => {
+              const dateSpan = document.querySelector(
+                'div[data-v-369ee20f=""] > span:nth-child(2)'
+              );
+              const dateText = dateSpan ? dateSpan.textContent.trim() : "";
+              const indexOfPipe = dateText.indexOf("|");
 
-            // Extract details by opening the link
-            const details = await getDetailsFromLink(link);
+              // Check if pipe symbol exists in the date text
+              if (indexOfPipe !== -1) {
+                // Extract only the portion before the pipe symbol
+                return dateText.slice(0, indexOfPipe).trim();
+              }
 
-            console.log(`details: ${details}`);
+              // If no pipe symbol is found, return the original date text
+              return dateText;
+            });
 
-            // Check if the report's date is within the specified range
-            if (isDateInRange(date, startDate, endDate)) {
-              // Add 'location: South Africa' property for reports from 'ewn' search base
-              reports.push({
-                accidentType,
-                date,
-                details,
-                location: "South Africa",
-                link,
-              });
+            const detailsHTML = await detailsPage.evaluate(
+              () =>
+                document.querySelector('article[data-v-369ee20f=""]').innerHTML
+            );
 
-              console.log(`Added report ${index + 1} to 'reports' array`);
+            const date = dateHTML.trim();
+            const details = cheerio
+              .load(detailsHTML)("p:first-child")
+              .text()
+              .trim();
+
+            // Push the extracted information into the reports array
+            reports.push({
+              accidentType,
+              date,
+              details,
+              location: "South Africa", // Adjusted location based on the website
+              link,
+            });
+
+            console.log(`Report ${index + 1} processed and added to the array`);
+          } catch (err) {
+            console.error(`Error processing report ${index + 1}: ${err}`);
+          } finally {
+            // Close the details page to avoid potential memory leaks
+            if (detailsPage) {
+              await detailsPage.close();
             }
-          });
-
-          // Check if there is a next page
-          const nextPageLink = $(".pagination.right li.arrow a:eq(1)");
-
-          if (!nextPageLink.length) {
-            console.log("No more pages. Exiting");
-            break;
           }
-
-          // Increment the page number for the next iteration
-          pageNumber++;
         }
 
         console.log("Scraping complete. Closing browser");
@@ -586,135 +623,240 @@ async function searchAndScrape(searchBase, query, startDate, endDate) {
 
       console.log("Returning 'reports' array");
       return reports;
-    } else if (searchBase === "sowetanlive") {
+    }
+    else if (searchBase === "sowetanlive") {
+      console.log("Searching on SowetanLIVE...");
+    
       const searchUrl = "https://www.sowetanlive.co.za/";
-
-      const browser = await puppeteer.launch({ headless: true });
-      const page = await browser.newPage();
-      const userAgent = randomUseragent.getRandom();
-
-      await page.setUserAgent(userAgent);
-
-      // Navigate to the search page
-      await page.goto(searchUrl, { timeout: 120000 });
-
-      // Wait for some time to simulate human-like behavior
-      await page.waitForTimeout(randomDelay());
-
-      // Find the search input within the div with class "field"
-      const searchInputSelector =
-        '.field input[type="text"][placeholder="Search SowetanLIVE"]';
-      await page.type(searchInputSelector, query);
-      await page.keyboard.press("Enter");
-
+      const maxRetries = 3;
+      let currentRetry = 0;
+    
       let reports = [];
-
-      while (true) {
-        // Wait for the results to load
-        const resultsSelector = ".results .result-set a.result";
-        await page.waitForSelector(resultsSelector, {
-          timeout: 120000,
-          visible: true,
-        });
-
-        // Fetch the results from the specified HTML structure
-        const newReports = await page.evaluate(
-          (isDateInRangeString, startDate, endDate, resultsSelector) => {
-            const isDateInRange = new Function(
-              "return " + isDateInRangeString
-            )();
-            const newReports = [];
-            const resultElements = document.querySelectorAll(resultsSelector);
-            resultElements.forEach((element) => {
-              const link = element.getAttribute("href");
-              const accidentType =
-                element.querySelector("h2")?.textContent?.trim() || "";
-              const rawDate =
-                element.querySelector(".date-stamp")?.textContent?.trim() || "";
-              const details =
-                element.querySelector("p")?.textContent?.trim() || "";
-
-              function reverseTimeDifference(relativeTimeString) {
-                const currentDate = new Date();
-
-                const match = relativeTimeString.match(/(\d+)\s+(\w+)\s+ago/);
-
-                if (!match) {
-                  // Invalid or unsupported format
-                  return null;
-                }
-
-                const [, amount, unit] = match;
-                const elapsedMilliseconds = calculateElapsedMilliseconds(
-                  amount,
-                  unit
-                );
-
-                const absoluteDate = new Date(
-                  currentDate.getTime() - elapsedMilliseconds
-                );
-
-                // Format the absolute date
-                const formattedDate = absoluteDate.toLocaleDateString("en-US", {
-                  month: "long",
-                  day: "numeric",
-                  year: "numeric",
+    
+      while (currentRetry < maxRetries) {
+        const browser = await puppeteer.launch({ headless: true });
+        console.log("Browser launched");
+    
+        try {
+          const page = await browser.newPage();
+          console.log("New page created");
+    
+          const userAgent = randomUseragent.getRandom();
+          console.log("Using user agent:", userAgent);
+    
+          await page.setUserAgent(userAgent);
+          console.log("User agent set");
+    
+          try {
+            // Navigate to the search page
+            await page.goto(searchUrl, { timeout: 1300000, waitUntil: "networkidle0" });
+            console.log("Navigated to search page");
+    
+            // Wait for the search icon to be present
+            await page.waitForSelector('#nav-search');
+    
+            // Click the search icon to make the search input visible
+            await page.click('#nav-search a');
+            console.log("Clicked search icon");
+    
+            // Wait for the search input to be visible
+            await page.waitForSelector('.field input[type="text"][placeholder="Search SowetanLIVE"]');
+    
+            // Wait for some time to simulate human-like behavior
+            await page.waitForTimeout(randomDelay());
+            console.log("Simulated human-like delay");
+    
+            // Find the search input within the div with class "field"
+            const searchInputSelector = '.field input[type="text"][placeholder="Search SowetanLIVE"]';
+            await page.type(searchInputSelector, query);
+            console.log("Typed query into search input");
+            await page.keyboard.press("Enter");
+            console.log("Pressed Enter to submit search");
+    
+            while (true) {
+              console.log("--- Starting new page of results ---");
+              // Wait for the results to load
+              const resultsSelector = ".results .result-set a.result";
+              await page.waitForSelector(resultsSelector, {
+                timeout: 120000,
+                visible: true,
+              });
+              console.log("Results loaded");
+    
+              // Fetch the results from the specified HTML structure
+              const newReports = await page.evaluate(
+                (isDateInRangeString, startDate, endDate, resultsSelector) => {
+                  const isDateInRange = new Function(
+                    "return " + isDateInRangeString
+                  )();
+                  const newReports = [];
+                  const resultElements = document.querySelectorAll(resultsSelector);
+                  resultElements.forEach((element) => {
+                    const link = element.getAttribute("href");
+                    const accidentType =
+                      element.querySelector("h2")?.textContent?.trim() || "";
+                    const rawDate =
+                      element.querySelector(".date-stamp")?.textContent?.trim() || "";
+                    const details =
+                      element.querySelector("p")?.textContent?.trim() || "";
+    
+                    function reverseTimeDifference(relativeTimeString) {
+                      const currentDate = new Date();
+    
+                      const match = relativeTimeString.match(/(\d+)\s+(\w+)\s+ago/);
+    
+                      if (!match) {
+                        // Invalid or unsupported format
+                        return null;
+                      }
+    
+                      const [, amount, unit] = match;
+                      const elapsedMilliseconds = calculateElapsedMilliseconds(
+                        amount,
+                        unit
+                      );
+    
+                      const absoluteDate = new Date(
+                        currentDate.getTime() - elapsedMilliseconds
+                      );
+    
+                      // Format the absolute date
+                      const formattedDate = absoluteDate.toLocaleDateString("en-US", {
+                        month: "long",
+                        day: "numeric",
+                        year: "numeric",
+                      });
+    
+                      return formattedDate;
+                    }
+                    function calculateElapsedMilliseconds(amount, unit) {
+                      const unitsInMilliseconds = {
+                        second: 1000,
+                        minute: 60 * 1000,
+                        hour: 60 * 60 * 1000,
+                        day: 24 * 60 * 60 * 1000,
+                        week: 7 * 24 * 60 * 60 * 1000,
+                        month: 30 * 24 * 60 * 60 * 1000, // Assuming a month is 30 days
+                        year: 365 * 24 * 60 * 60 * 1000, // Assuming a year is 365 days
+                      };
+    
+                      // Convert unit to lowercase and remove any trailing 's'
+                      const normalizedUnit = unit.toLowerCase().replace(/s$/, "");
+    
+                      return amount * (unitsInMilliseconds[normalizedUnit] || 0);
+                    }
+    
+                    const date = reverseTimeDifference(rawDate);
+    
+                    if (isDateInRange(date, startDate, endDate)) {
+                      newReports.push({
+                        accidentType,
+                        date,
+                        details,
+                        location: "South Africa",
+                        link: `https://www.sowetanlive.co.za${link}`,
+                      });
+                    }
+                  });
+                  return newReports;
+                },
+                isDateInRange.toString(),
+                startDate,
+                endDate,
+                resultsSelector
+              );
+              console.log("Fetched", newReports.length, "new reports");
+              reports.push(...newReports);
+    
+              // Dynamically find the next "More" button based on its current `rel` value
+              let nextButton;
+              let relValue = 1; // Start with the initial rel value
+    
+              while ((nextButton = await page.$('a[rel="' + (relValue + 1) + '"]'))) {
+                console.log("Clicking 'More' button with rel=", relValue + 1);
+                await nextButton.click();
+                relValue++;
+    
+                // Wait for the results to load after clicking "More"
+                const resultsSelector = ".results .result-set a.result";
+                await page.waitForSelector(resultsSelector, {
+                  timeout: 120000,
+                  visible: true,
                 });
-
-                return formattedDate;
+                console.log("Results loaded after clicking 'More'");
+    
+                // Fetch the new results from the specified HTML structure
+                const newReports = await page.evaluate(
+                  (isDateInRangeString, startDate, endDate, resultsSelector) => {
+                    const isDateInRange = new Function(
+                      "return " + isDateInRangeString
+                    )();
+                    const newReports = [];
+                    const resultElements = document.querySelectorAll(resultsSelector);
+                    resultElements.forEach((element) => {
+                      const link = element.getAttribute("href");
+                      const accidentType =
+                        element.querySelector("h2")?.textContent?.trim() || "";
+                      const rawDate =
+                        element.querySelector(".date-stamp")?.textContent?.trim() ||
+                        "";
+                      const details =
+                        element.querySelector("p")?.textContent?.trim() || "";
+    
+                      const date = reverseTimeDifference(rawDate);
+    
+                      if (isDateInRange(date, startDate, endDate)) {
+                        newReports.push({
+                          accidentType,
+                          date,
+                          details,
+                          location: "South Africa",
+                          link: `https://www.sowetanlive.co.za${link}`,
+                        });
+                      }
+                    });
+                    return newReports;
+                  },
+                  isDateInRange.toString(),
+                  startDate,
+                  endDate,
+                  resultsSelector
+                );
+                console.log(
+                  "Fetched",
+                  newReports.length,
+                  "new reports after clicking 'More'"
+                );
+                reports.push(...newReports);
               }
-              function calculateElapsedMilliseconds(amount, unit) {
-                const unitsInMilliseconds = {
-                  second: 1000,
-                  minute: 60 * 1000,
-                  hour: 60 * 60 * 1000,
-                  day: 24 * 60 * 60 * 1000,
-                  week: 7 * 24 * 60 * 60 * 1000,
-                  month: 30 * 24 * 60 * 60 * 1000, // Assuming a month is 30 days
-                  year: 365 * 24 * 60 * 60 * 1000, // Assuming a year is 365 days
-                };
-
-                // Convert unit to lowercase and remove any trailing 's'
-                const normalizedUnit = unit.toLowerCase().replace(/s$/, "");
-
-                return amount * (unitsInMilliseconds[normalizedUnit] || 0);
+    
+              // If no more "More" buttons are found, exit the loop
+              if (!nextButton) {
+                console.log("No more 'More' buttons found");
+                break;
               }
-
-              const date = reverseTimeDifference(rawDate);
-
-              if (isDateInRange(date, startDate, endDate)) {
-                newReports.push({
-                  accidentType,
-                  date,
-                  details,
-                  location: "South Africa",
-                  link: `https://www.sowetanlive.co.za${link}`,
-                });
-              }
-            });
-            return newReports;
-          },
-          isDateInRange.toString(),
-          startDate,
-          endDate,
-          resultsSelector
-        );
-
-        reports.push(...newReports);
-
-        // Click the "More" button
-        const moreButton = await page.$('a[rel="2"]');
-        if (moreButton) {
-          await moreButton.click();
-        } else {
-          break; // No more "More" button found, exit the loop
+            }
+    
+            // Close the browser
+            await browser.close();
+            return reports;
+          } catch (error) {
+            console.error(`Error during SowetanLIVE search: ${error.message}`);
+            currentRetry++;
+          }
+        } finally {
+          // Make sure to close the browser in case of errors
+          if (browser) {
+            await browser.close();
+          }
         }
       }
-
-      // Close the browser
-      await browser.close();
+    
+      console.error(`Max retries (${maxRetries}) reached. Unable to perform SowetanLIVE search.`);
       return reports;
-    } else if (searchBase === "alive") {
+    }
+    
+    else if (searchBase === "alive") {
       const generateSearchUrl = (query) =>
         `https://www.arrivealive.mobi/search?q=${encodeURIComponent(query)}`;
 
@@ -848,7 +990,7 @@ async function searchAndScrape(searchBase, query, startDate, endDate) {
       await browser.close();
 
       return reports;
-    }
+    } 
     
     else if (searchBase === "africanews") {
       const searchUrl = `https://www.africanews.com/search/${encodeURIComponent(
@@ -872,30 +1014,41 @@ async function searchAndScrape(searchBase, query, startDate, endDate) {
         const data = await page.evaluate(() => {
           const articles = document.querySelectorAll(".teaser.news");
           const extractedData = [];
-          
+
           articles.forEach((article) => {
-            const linkElement = article.querySelector("h2.teaser__title.u-mt0 a");
+            const linkElement = article.querySelector(
+              "h2.teaser__title.u-mt0 a"
+            );
             const link = linkElement ? linkElement.getAttribute("href") : null;
             const accidentType = linkElement ? linkElement.textContent : null;
-            
-            const descriptionElement = article.querySelector("p.teaser__description a");
-            const details = descriptionElement ? descriptionElement.textContent.trim() : null;
-            
+
+            const descriptionElement = article.querySelector(
+              "p.teaser__description a"
+            );
+            const details = descriptionElement
+              ? descriptionElement.textContent.trim()
+              : null;
+
             const dateElement = article.querySelector("time.article__date");
-            const date =  dateElement.getAttribute("datetime");
-      
+            const dateString = dateElement.getAttribute("datetime"); // Get the original date string
+
+            // Convert the date string to the desired format "January 9, 2023"
+            const options = { month: "long", day: "numeric", year: "numeric" }; // Customize format if needed
+            const formatter = new Intl.DateTimeFormat("en-US", options);
+            const date = formatter.format(new Date(dateString));
+
             extractedData.push({
-              link: link ? `https://www.africanews.com${link}` : null, 
+              link: link ? `https://www.africanews.com${link}` : null,
               accidentType,
               details,
               date,
-              location:'Location'
+              location: "Location",
             });
           });
-      
+
           return extractedData;
         });
-        
+
         return data;
       };
       // Extract data from the current page
@@ -904,8 +1057,7 @@ async function searchAndScrape(searchBase, query, startDate, endDate) {
       // Close the browser
       await browser.close();
       return reports;
-    }
-     else {
+    } else {
       return [];
     }
   } catch (error) {
