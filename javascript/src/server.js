@@ -593,7 +593,9 @@ async function searchAndScrape(searchBase, query, startDate, endDate) {
               .text()
               .trim();
 
-            // Push the extracted information into the reports array
+            if (isDateInRange(date, startDate, endDate)) {
+              // Add 'location: Nigeria' property for reports from 'vanguard' search base
+               // Push the extracted information into the reports array
             reports.push({
               accidentType,
               date,
@@ -601,6 +603,7 @@ async function searchAndScrape(searchBase, query, startDate, endDate) {
               location: "South Africa", // Adjusted location based on the website
               link,
             });
+            }
 
             console.log(`Report ${index + 1} processed and added to the array`);
           } catch (err) {
@@ -929,14 +932,20 @@ async function searchAndScrape(searchBase, query, startDate, endDate) {
               await linkedPage.close();
 
               // Add 'location: Nigeria' property for reports from 'daily' search base
-              reports.push({
-                accidentType,
-                date: linkedDate, // Use date fetched from the linked page
-                details,
-                location: "Nigeria",
-                link: `https://www.arrivealive.mobi${link}`,
-                currentPage,
-              });
+           
+
+
+              if (isDateInRange(date, startDate, endDate)) {
+                // Add 'location: Nigeria' property for reports from 'vanguard' search base
+                reports.push({
+                  accidentType,
+                  date: linkedDate, // Use date fetched from the linked page
+                  details,
+                  location: "Nigeria",
+                  link: `https://www.arrivealive.mobi${link}`,
+                  currentPage,
+                });
+              }
             } catch (error) {
               console.error("Error fetching date:", error);
             }
@@ -1037,13 +1046,18 @@ async function searchAndScrape(searchBase, query, startDate, endDate) {
             const formatter = new Intl.DateTimeFormat("en-US", options);
             const date = formatter.format(new Date(dateString));
 
-            extractedData.push({
-              link: link ? `https://www.africanews.com${link}` : null,
-              accidentType,
-              details,
-              date,
-              location: "Location",
-            });
+          
+
+            if (isDateInRange(date, startDate, endDate)) {
+              // Add 'location: Nigeria' property for reports from 'vanguard' search base
+              extractedData.push({
+                link: link ? `https://www.africanews.com${link}` : null,
+                accidentType,
+                details,
+                date,
+                location: "Location",
+              });
+            }
           });
 
           return extractedData;
