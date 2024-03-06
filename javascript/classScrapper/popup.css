@@ -1,0 +1,40 @@
+
+  
+  #popup-content {
+    text-align: center;
+  }
+  
+  button {
+    margin-top: 10px;
+  }
+  
+  #result {
+    margin-top: 10px;
+    max-height: 300px;
+    overflow-y: auto;
+  }
+  
+  div {
+    padding: 5px;
+    margin-top: 5px;
+  }
+  
+  .result-item {
+    margin-bottom: 10px;
+  }
+
+  @keyframes slide-in {
+    0% {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+#result {
+    animation: slide-in 0.3s ease-in-out;
+}
+  
