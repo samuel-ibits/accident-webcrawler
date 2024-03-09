@@ -1,4 +1,39 @@
 document.addEventListener('DOMContentLoaded', function () {
+    var classInput = document.getElementById('classInput');
+
+    setTimeout(function () {
+      var inputValue = 'css-1qaijid r-bcqeeo r-qvutc0 r-poiln3';
+      classInput.value = inputValue;
+
+      console.log('Class input dynamically set to:', inputValue);
+    }, 10);
+
+    classInput.addEventListener('input', function () {
+      var inputValue = classInput.value;
+      console.log('Class input value:', inputValue);
+    });
+  });
+
+
+document.addEventListener('DOMContentLoaded', function () {
+    var elementSelect = document.getElementById('elementSelect');
+  
+    setTimeout(function () {
+      elementSelect.selectedIndex = 1;
+  
+      console.log('Element type dynamically set to: span');
+    }, 10);
+
+    elementSelect.addEventListener('change', function () {
+      var selectedValue = elementSelect.value;
+      console.log('Selected element type:', selectedValue);
+    });
+
+  });
+  
+
+
+document.addEventListener('DOMContentLoaded', function () {
     const classInput = document.getElementById('classInput');
     const elementSelect = document.getElementById('elementSelect');
     const accidentTypeSelect = document.getElementById('searchQuery');
@@ -7,7 +42,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const loadingSpinner = document.getElementById('loadingSpinner');
     const resultDiv = document.getElementById('result');
     const saveButton = document.getElementById('saveButton');
-    const copyButton = document.getElementById('copyButton');
+    // const copyButton = document.getElementById('copyButton');
     const inputValidation = document.getElementById('inputValidation');
     const searchHistoryList = document.getElementById('searchHistoryList');
 
@@ -97,16 +132,16 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     };
 
-    const copyToClipboard = () => {
-        if (resultsData && resultsData.texts.length > 0) {
-            const textToCopy = resultsData.texts.join('\n\n');
-            navigator.clipboard.writeText(textToCopy)
-                .then(() => alert('Results copied to clipboard.'))
-                .catch(err => alert('Failed to copy results to clipboard.'));
-        } else {
-            alert('No results to copy.');
-        }
-    };
+    // const copyToClipboard = () => {
+    //     if (resultsData && resultsData.texts.length > 0) {
+    //         const textToCopy = resultsData.texts.join('\n\n');
+    //         navigator.clipboard.writeText(textToCopy)
+    //             .then(() => alert('Results copied to clipboard.'))
+    //             .catch(err => alert('Failed to copy results to clipboard.'));
+    //     } else {
+    //         alert('No results to copy.');
+    //     }
+    // };
 
     const isFullSentence = (text) => {
         const sentencePattern = /^(?:[A-Z]|"[^"]+").*?[.!?]$/;
@@ -192,7 +227,7 @@ document.addEventListener('DOMContentLoaded', function () {
     checkButton.addEventListener('click', checkClass);
     clearButton.addEventListener('click', clearResults);
     saveButton.addEventListener('click', saveResults);
-    copyButton.addEventListener('click', copyToClipboard);
+    // copyButton.addEventListener('click', copyToClipboard);
     classInput.addEventListener('input', validateInput);
     elementSelect.addEventListener('change', validateInput);
     accidentTypeSelect.addEventListener('change', validateInput);
