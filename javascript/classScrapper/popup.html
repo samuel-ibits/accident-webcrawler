@@ -46,51 +46,18 @@
 <body class="bg-gray-100">
   <div id="popup-content" class="p-4 bg-white rounded-lg shadow-md">
     <h2 class="text-2xl font-bold mb-6">Class Scraper</h2>
-    <div class="tooltip">
-      <label for="classInput" class="block text-sm font-medium text-gray-700">Enter class name:</label>
-      <div class="tooltip-text">Enter the CSS class name you want to search for.</div>
-    </div>
-    <div class="relative">
+  
+    <div class="relative hidden">
       <input type="text" id="classInput" placeholder="e.g., myClass"
         class="mt-1 block w-full p-2 rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500"
         aria-label="Enter class name" />
       <div id="inputValidation" class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none"></div>
     </div>
-    <div class="tooltip">
-      <label for="elementSelect" class="block mt-4 text-sm font-medium text-gray-700">Select element type:</label>
-      <div class="tooltip-text">Select the type of HTML element you want to search for.</div>
-    </div>
+   
     <select id="elementSelect"
-      class="mt-1 block w-full p-2 rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500">
-      <option value="">-- Select an option --</option>
-      <option value="div">div</option>
+      class="mt-1 block w-full p-2 rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 hidden">
       <option value="span">span</option>
-      <option value="article">article</option>
-      <option value="header">header</option>
-      <option value="p">p</option>
-      <option value="a">a</option>
-      <option value="img">img</option>
-      <option value="ul">ul</option>
-      <option value="ol">ol</option>
-      <option value="li">li</option>
-      <option value="h1">h1</option>
-      <option value="h2">h2</option>
-      <option value="h3">h3</option>
-      <option value="h4">h4</option>
-      <option value="h5">h5</option>
-      <option value="h6">h6</option>
-      <option value="section">section</option>
-      <option value="aside">aside</option>
-      <option value="nav">nav</option>
-      <option value="footer">footer</option>
-      <option value="form">form</option>
-      <option value="button">button</option>
-      <option value="label">label</option>
-      <option value="input">input</option>
-      <option value="textarea">textarea</option>
-      <option value="select">select</option>
-      <!-- Add more options as needed -->
-
+      <option value="span">span</option>
     </select>
 
     <div class="mt-4 tooltip">
@@ -99,7 +66,7 @@
     </div>
     <select id="searchQuery" name="searchQuery"
       class="mt-1 block w-full p-2 rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500">
-      <option value="Select Accident Type">Select Accident Type</option>
+      <option value="Select Accident Type" selected>Select Accident Type</option>
       <option value="Building Collapse">Building Collapse</option>
       <option value="Fallen Tanker">Fallen Tanker</option>
       <option value="Fire">Fire</option>
@@ -114,7 +81,6 @@
       <option value="Vehicle Breakdown">Vehicle Breakdown</option>
       <option value="Violent Attacks">Violent Attacks</option>
       <option value="WARNING">WARNING</option>
-      <option value="Javascript">Javascript</option>
       <option value="Warning- Flood">Warning- Flood</option>
 
     </select>
@@ -144,16 +110,17 @@
         class="py-2 px-4 rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
         Save Results
       </button>
-      <button id="copyButton"
+      <!-- <button id="copyButton"
         class="py-2 px-4 rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
         Copy to Clipboard
-      </button>
+      </button> -->
     </div>
     <div id="searchHistory" class="mt-6">
       <h3 class="text-lg font-semibold mb-2">Recent Searches:</h3>
       <ul id="searchHistoryList" class="text-sm"></ul>
     </div>
   </div>
+
 </body>
 
 </html>
