@@ -23,7 +23,7 @@ import { Console } from "console";
 async function sendToApi(data) {
   console.log("data form scrape and about to be sent to temp db", data)
 
-  const apiUrl = "http://localhost:3000/scrape/fetch";
+  const apiUrl = "http://localhost:3000/api/scrape/fetch";
   const requestOptions = {
     method: "POST",
     headers: {
