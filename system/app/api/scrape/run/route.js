@@ -24,7 +24,14 @@ export async function POST(request) {
       searchBase,
     });
   } else {
-    console.log("method not found", searchBase);
+    console.log("method not found redirecting to searchBar gateway instead of ", searchBase);
+    await Gateway['searchBar']({
+      emergencyType,
+      fromDate,
+      toDate,
+      specialParameters,
+      searchBase,
+    });
   }
   //db stuffs
   await connectMongoDB();

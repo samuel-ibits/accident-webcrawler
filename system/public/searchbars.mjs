@@ -1,6 +1,8 @@
 //All imports
 
 import { Worker, isMainThread, parentPort, workerData } from "worker_threads";
+import path from "path"; // Import the 'path' module to work with file paths
+
 
 import puppeteer from "puppeteer-extra";
 import StealthPlugin from "puppeteer-extra-plugin-stealth";
@@ -10,6 +12,7 @@ import cheerio from "cheerio";
 import tough from "tough-cookie";
 import axiosRateLimit from "axios-rate-limit";
 import { randomDelay } from "random-delay";
+import { Console } from "console";
 
 
 
@@ -41,6 +44,7 @@ async function sendToApi(data) {
   }
 }
 async function setupPage(browser, searchUrl, timeout = 120000) {
+  console.log("backgroud started")
   const page = await browser.newPage();
   const userAgent = randomUseragent.getRandom();
 
@@ -488,15 +492,24 @@ async function runPuppeteerTask(formdata) {
 
 
 
-export default function initiateSearchBarWorker(formData) {
-    if (isMainThread) {
-      const worker = new Worker(new URL(import.meta.url), {
-        workerData: formData,
-      });
+export default async function initiateSearchBarWorker(formData) {
+  console.log('worker initiated');
+  if (isMainThread) {
+    console.log('worker main', formData);
 
+    // Construct the absolute path to the worker script file
+    const workerScriptPath = path.join(__dirname, 'searchbars.mjs');
+
+    console.log(wor)
+    // Create the worker using the correct file path
+    const worker = new Worker(workerScriptPath, { workerData: formData });
+
+      
+  
+      console.log('what is worker', worker)
       // Handle events or messages from the worker if needed
       worker.on("message", (message) => {
-        console.log("Worker thread sent a message:", message);
+        console.log("Worker thread sent a message:", message.data);
       });
 
       // Handle errors in the worker thread
@@ -511,6 +524,8 @@ export default function initiateSearchBarWorker(formData) {
         }
       });
     } else {
+        console.log('worker puppeteer')
+
       runPuppeteerTask(workerData);
     }
 }

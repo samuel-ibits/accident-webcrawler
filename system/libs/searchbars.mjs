@@ -1,36 +1,72 @@
-const express = require("express");
-const puppeteer = require("puppeteer-extra");
-const StealthPlugin = require("puppeteer-extra-plugin-stealth");
-const randomUseragent = require("random-useragent");
-const axios = require("axios");
-const cheerio = require("cheerio");
-const tough = require("tough-cookie");
-const rateLimit = require("axios-rate-limit");
-const { randomDelay } = require("random-delay");
-const moment = require("moment");
+//All imports
 
-puppeteer.use(StealthPlugin());
+import { Worker, isMainThread, parentPort, workerData } from "worker_threads";
+import path from "path"; // Import the 'path' module to work with file paths
 
-const app = express();
-const port = 3001;
 
-app.use(express.static("public"));
+import puppeteer from "puppeteer-extra";
+import StealthPlugin from "puppeteer-extra-plugin-stealth";
+import randomUseragent from "random-useragent";
+import axios from "axios";
+import cheerio from "cheerio";
+import tough from "tough-cookie";
+import axiosRateLimit from "axios-rate-limit";
+import { randomDelay } from "random-delay";
+import { Console } from "console";
 
-app.get("/", (req, res) => {
-  res.sendFile(__dirname + "/public/index.html");
-});
+// const rateLimit = require("axios-rate-limit");
+// const moment = require("moment");
 
-app.listen(port, () => {
-  console.log(`Server is running at http://localhost:${port}/`);
-});
 
-// Set up cookies and user-agent for Axios
-const cookieJar = new tough.CookieJar();
 
-const http = rateLimit(axios.create(), {
-  maxRequests: 1,
-  perMilliseconds: 1000,
-});
+//send results back to repoary sorage
+async function sendToApi(data) {
+  console.log("data form scrape and about to be sent to temp db", data)
+
+  const apiUrl = "http://localhost:3000/scrape/fetch";
+  const requestOptions = {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({data}),
+  };
+
+  try {
+    const response = await fetch(apiUrl, requestOptions);
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+
+
+    console.log("data sent to temb db",response)
+    // Handle successful response if needed
+    parentPort.postMessage("Puppeteer task completed successfully");
+
+  } catch (error) {
+    console.error("Error while sending data to API:", error);
+    // Handle the error appropriately (e.g., log, retry, or propagate)
+  }
+}
+
+//setup page
+async function setupPage(browser, searchUrl, timeout = 120000) {
+  console.log("Background task started");
+  const page = await browser.newPage();
+  const userAgent = randomUseragent.getRandom();
+
+  await page.setUserAgent(userAgent);
+  await page.goto(searchUrl, { timeout });
+
+  // Wait for some time to simulate human-like behavior
+  await page.waitFor(3000); // Wait for 3 seconds
+console.log('page setup succesful')
+  return page;
+}
+
+
+
 
 
 function isDateInRange(reportDate, startDate, endDate) {
@@ -1082,18 +1118,62 @@ async function searchAndScrape(searchBase, query, startDate, endDate) {
   }
 }
 
-app.get("/search", async (req, res) => {
-  const searchBase = req.query.searchBase;
-  const searchQuery = req.query.query;
-  const startDate = req.query.startDate;
-  const endDate = req.query.endDate;
 
-  const reports = await searchAndScrape(
-    searchBase,
-    searchQuery,
-    startDate,
-    endDate
-  );
+async function runPuppeteerTask(formdata) {
+    const {searchBase, emergencyType,specialParameters, startDate, endDate} = formdata;
+const query= emergencyType + specialParameters;
 
-  res.json(reports);
-});
+  puppeteer.use(StealthPlugin());
+
+  // Set up cookies and user-agent for Axios
+  const cookieJar = new tough.CookieJar();
+
+  const http = axiosRateLimit(axios.create(), {
+    maxRequests: 1,
+    perMilliseconds: 1000,
+  });
+
+  const baseUrls = {
+    vanguard: "https://thecurrent.pk/?s=",
+    punch: "https://punchng.com/?s=",
+    // ... other search bases
+  };
+
+  try {
+    const searchUrl = baseUrls[searchBase] + query;
+    const browser = await puppeteer.launch({ headless: true });
+
+    // const page = await setupPage(browser, searchUrl);
+
+    const reports = await searchAndScrape(
+      searchBase,
+      query,
+      startDate,
+      endDate
+    );
+
+    console.log(reports)
+
+    await browser.close();
+    
+    //send scraped data to apis
+
+    await sendToApi(reports);
+    return reports;
+
+  } catch (error) {
+    console.error("Error:", error.message);
+    return [];
+  }
+
+  // Send a message to the main thread
+  parentPort.postMessage("Puppeteer task completed successfully");
+}
+
+
+
+
+
+runPuppeteerTask(workerData);
+
+
