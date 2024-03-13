@@ -134,7 +134,9 @@ async function searchAndScrape(searchBase, query, startDate, endDate) {
       }
 
       return reports;
-    } else if (searchBase === "punch") {
+    }
+    
+    else if (searchBase === "punch") {
       console.log("Searching Punchng for", query);
 
       // Initialize array to hold the accident reports
@@ -298,7 +300,9 @@ async function searchAndScrape(searchBase, query, startDate, endDate) {
 
       // Return the array of reports
       return reports;
-    } else if (searchBase === "daily") {
+    } 
+    
+    else if (searchBase === "daily") {
       // Function to generate search URL for a given page
       const generateSearchUrl = (query, page) =>
         `https://dailytrust.com/search/#gsc.tab=0&gsc.q=${encodeURIComponent(
@@ -395,107 +399,120 @@ async function searchAndScrape(searchBase, query, startDate, endDate) {
       }
 
       return allReports;
-    } else if (searchBase === "guyana") {
+    } 
+    
+    else if (searchBase === "guyana") {
       const generateSearchUrl = (query, pageNumber) =>
-        `https://guyanatimesgy.com/page/${pageNumber}/?s=${query}`;
-
+         `https://guyanatimesgy.com/page/${pageNumber}/?s=${query}`;
+     
       // Initialize an empty array to store the reports
       let reports = [];
-
+     
       // Start from page 1
       let pageNumber = 1;
-
+     
       const browser = await puppeteer.launch({ headless: true });
-
+     
       try {
-        // Open the first page to extract the last page number
-        const firstPageUrl = generateSearchUrl(query, pageNumber);
-        const firstPage = await browser.newPage();
-        await firstPage.goto(firstPageUrl, { timeout: 60000 });
-        const firstPageContent = await firstPage.content();
-        const $firstPage = cheerio.load(firstPageContent);
-
-        // Extract the last page number from the pagination element
-        const lastPageElement = $firstPage(".page-nav .last");
-        const lastPageNumber = parseInt(lastPageElement.text(), 10);
-
-        console.log(`Total pages: ${lastPageNumber}`);
-
-        await firstPage.close();
-
-        // Loop through all pages
-        while (pageNumber <= lastPageNumber) {
-          // Generate the search URL for the current page
-          const searchUrl = generateSearchUrl(query, pageNumber);
-          console.log(`Fetching data from: ${searchUrl}`);
-
-          // Initialize a new Puppeteer page for each iteration of the loop
-          const page = await browser.newPage();
-
-          const userAgent = randomUseragent.getRandom();
-          await page.setUserAgent(userAgent);
-
-          await page.goto(searchUrl, { timeout: 60000 });
-          console.log("Page loaded successfully.");
-
-          await page.waitForTimeout(randomDelay());
-          const html = await page.content();
-          await page.close();
-          console.log("Page content extracted successfully.");
-
-          // Parse the HTML and extract the accident reports
-          const $ = cheerio.load(html);
-          const accidentReports = $(
-            ".td_module_16.td_module_wrap.td-animation-stack"
-          );
-
-          accidentReports.each((index, element) => {
-            // Move the 'date' declaration outside the loop
-            let date;
-
-            // Extract the accident details and add them to the 'reports' array
-            const titleElement = $(element).find(".entry-title a");
-            const link = titleElement.attr("href");
-            const accidentType = titleElement.text();
-            const dateElement = $(element).find(".td-post-date time");
-            const rawDate = dateElement.attr("datetime");
-
-            // Convert the raw date to a human-readable format
-            date = new Date(rawDate).toLocaleDateString("en-US", {
-              month: "long",
-              day: "numeric",
-              year: "numeric",
-            });
-
-            // Extract details
-            const details = $(element).find(".td-excerpt").text().trim();
-
-            // Check if the report's date is within the specified range
-            if (isDateInRange(date, startDate, endDate)) {
-              // Add 'location: Guyana' property for reports from 'guyana' search base
-              reports.push({
-                accidentType,
-                date,
-                details,
-                location: "Guyana",
-                link,
-              });
-            }
-          });
-
-          // Increment the page number for the next iteration
-          pageNumber++;
-        }
-
-        console.log("Scraping complete. Closing browser.");
+         // Open the first page to extract the last page number
+         const firstPageUrl = generateSearchUrl(query, pageNumber);
+         const firstPage = await browser.newPage();
+         await firstPage.goto(firstPageUrl, { timeout: 60000 });
+         const firstPageContent = await firstPage.content();
+         const $firstPage = cheerio.load(firstPageContent);
+     
+         // Extract the last page number from the pagination element
+         const lastPageElement = $firstPage(".page-nav .last");
+         const lastPageNumber = parseInt(lastPageElement.text(), 10);
+     
+         console.log(`Total pages: ${lastPageNumber}`);
+     
+         await firstPage.close();
+     
+         // Loop through all pages
+         while (pageNumber <= lastPageNumber) {
+           // Generate the search URL for the current page
+           const searchUrl = generateSearchUrl(query, pageNumber);
+           console.log(`Fetching data from: ${searchUrl}`);
+     
+           // Initialize a new Puppeteer page for each iteration of the loop
+           const page = await browser.newPage();
+     
+           const userAgent = randomUseragent.getRandom();
+           await page.setUserAgent(userAgent);
+     
+           try {
+             await page.goto(searchUrl, { timeout: 60000 });
+             console.log("Page loaded successfully.");
+     
+             await page.waitForTimeout(randomDelay());
+             const html = await page.content();
+             await page.close();
+             console.log("Page content extracted successfully.");
+     
+             // Parse the HTML and extract the accident reports
+             const $ = cheerio.load(html);
+             const accidentReports = $(
+               ".td_module_16.td_module_wrap.td-animation-stack"
+             );
+     
+             accidentReports.each((index, element) => {
+               // Move the 'date' declaration outside the loop
+               let date;
+     
+               // Extract the accident details and add them to the 'reports' array
+               const titleElement = $(element).find(".entry-title a");
+               const link = titleElement.attr("href");
+               const accidentType = titleElement.text();
+               const dateElement = $(element).find(".td-post-date time");
+               const rawDate = dateElement.attr("datetime");
+     
+               // Convert the raw date to a human-readable format
+               date = new Date(rawDate).toLocaleDateString("en-US", {
+                 month: "long",
+                 day: "numeric",
+                 year: "numeric",
+               });
+     
+               // Extract details
+               const details = $(element).find(".td-excerpt").text().trim();
+     
+               // Check if the report's date is within the specified range
+               if (isDateInRange(date, startDate, endDate)) {
+                 // Add 'location: Guyana' property for reports from 'guyana' search base
+                 reports.push({
+                   accidentType,
+                   date,
+                   details,
+                   location: "Guyana",
+                   link,
+                 });
+               }
+             });
+     
+             // Increment the page number for the next iteration
+             pageNumber++;
+           } catch (error) {
+             console.error(`Error on page ${pageNumber}: ${error.message}`);
+             // Close the page in case of error
+             await page.close();
+             // Break the loop to prevent further processing
+             break;
+           }
+         }
+     
+         console.log("Scraping complete. Closing browser.");
       } catch (error) {
-        console.error(`Error: ${error.message}`);
+         console.error(`Error: ${error.message}`);
       } finally {
-        await browser.close();
+         await browser.close();
       }
-
+     
       return reports;
-    } else if (searchBase === "ewn") {
+     }
+     
+    
+    else if (searchBase === "ewn") {
       const searchUrl = "https://www.ewn.co.za/search";
 
       console.log("Search URL defined");
@@ -629,6 +646,7 @@ async function searchAndScrape(searchBase, query, startDate, endDate) {
       console.log("Returning 'reports' array");
       return reports;
     }
+
     else if (searchBase === "sowetanlive") {
       console.log("Searching on SowetanLIVE...");
     
@@ -1004,76 +1022,82 @@ async function searchAndScrape(searchBase, query, startDate, endDate) {
     } 
     
     else if (searchBase === "africanews") {
-      const searchUrl = `https://www.africanews.com/search/${encodeURIComponent(
-        query
-      )}`;
-
+      const searchUrl = `https://www.africanews.com/search/${encodeURIComponent(query)}`;
+     
       const browser = await puppeteer.launch({ headless: true });
       const page = await browser.newPage();
       const userAgent = randomUseragent.getRandom();
-
+     
       await page.setUserAgent(userAgent);
-
+     
       // Navigate to the search page
       await page.goto(searchUrl, { timeout: 120000 });
-
+     
       // Wait for some time to simulate human-like behavior
       await page.waitForTimeout(randomDelay());
-
+     
       // Function to extract data from each article
       const extractData = async () => {
-        const data = await page.evaluate(() => {
-          const articles = document.querySelectorAll(".teaser.news");
-          const extractedData = [];
-
-          articles.forEach((article) => {
-            const linkElement = article.querySelector(
-              "h2.teaser__title.u-mt0 a"
-            );
-            const link = linkElement ? linkElement.getAttribute("href") : null;
-            const accidentType = linkElement ? linkElement.textContent : null;
-
-            const descriptionElement = article.querySelector(
-              "p.teaser__description a"
-            );
-            const details = descriptionElement
-              ? descriptionElement.textContent.trim()
-              : null;
-
-            const dateElement = article.querySelector("time.article__date");
-            const dateString = dateElement.getAttribute("datetime"); // Get the original date string
-
-            // Convert the date string to the desired format "January 9, 2023"
-            const options = { month: "long", day: "numeric", year: "numeric" }; // Customize format if needed
-            const formatter = new Intl.DateTimeFormat("en-US", options);
-            const date = formatter.format(new Date(dateString));
-
-          
-
-            if (isDateInRange(date, startDate, endDate)) {
-              // Add 'location: Nigeria' property for reports from 'vanguard' search base
-              extractedData.push({
-                link: link ? `https://www.africanews.com${link}` : null,
-                accidentType,
-                details,
-                date,
-                location: "Location",
-              });
-            }
-          });
-
-          return extractedData;
-        });
-
-        return data;
+         const data = await page.evaluate((startDate, endDate) => {
+           const articles = document.querySelectorAll(".teaser.news");
+           const extractedData = [];
+     
+           // Define the isDateInRange function directly within the scope
+           function isDateInRange(reportDate, startDate, endDate) {
+             const reportDateTime = new Date(reportDate);
+             const startDateTime = startDate ? new Date(startDate) : null;
+             const endDateTime = endDate ? new Date(endDate) : null;
+     
+             // Check if the report's date is within the specified range
+             return (
+               (!startDateTime || reportDateTime >= startDateTime) &&
+               (!endDateTime || reportDateTime <= endDateTime)
+             );
+           }
+     
+           articles.forEach((article) => {
+             const linkElement = article.querySelector("h2.teaser__title.u-mt0 a");
+             const link = linkElement ? linkElement.getAttribute("href") : null;
+             const accidentType = linkElement ? linkElement.textContent : null;
+     
+             const descriptionElement = article.querySelector("p.teaser__description a");
+             const details = descriptionElement ? descriptionElement.textContent.trim() : null;
+     
+             const dateElement = article.querySelector("time.article__date");
+             const dateString = dateElement.getAttribute("datetime"); // Get the original date string
+     
+             // Convert the date string to the desired format "January 9, 2023"
+             const options = { month: "long", day: "numeric", year: "numeric" }; // Customize format if needed
+             const formatter = new Intl.DateTimeFormat("en-US", options);
+             const date = formatter.format(new Date(dateString));
+     
+             // Check if the report's date is within the specified range
+             if (isDateInRange(date, startDate, endDate)) {
+               extractedData.push({
+                 link: link ? `https://www.africanews.com${link}` : null,
+                 accidentType,
+                 details,
+                 date,
+                 location: "Location",
+               });
+             }
+           });
+     
+           return extractedData;
+         }, startDate, endDate); // Pass startDate and endDate as arguments
+     
+         return data;
       };
       // Extract data from the current page
       const reports = await extractData();
-
+     
       // Close the browser
       await browser.close();
       return reports;
-    } else {
+     }
+     
+     
+    else {
       return [];
     }
   } catch (error) {
