@@ -153,27 +153,33 @@ document.addEventListener('DOMContentLoaded', function () {
         return sentencePattern.test(text) && !excludePatterns.some(pattern => pattern.test(text));
     };
 
-    const highlightText = (text, pattern) => {
+    const highlightText = (text, pattern, time) => {
         const escapedPattern = pattern.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
         const regex = new RegExp(escapedPattern, 'gi');
-        return text.replace(regex, match => `<span class="bg-yellow-200">${match}</span>`);
+        const highlightedText = text.replace(regex, match => `<span class="bg-yellow-200">${match}</span>`);
+        return { highlightedText, time };
     };
+
+   
 
     const displayResults = (results) => {
         resultDiv.innerHTML = '';
-
+    
         const accidentType = accidentTypeSelect.value;
-
+    
         if (results.count > 0) {
             let countDiv = document.createElement('div');
-            countDiv.textContent = `Number of results: ${results.count}`;
+            countDiv.textContent = `Total number of entries returned: ${results.count}`;
             resultDiv.appendChild(countDiv);
-
+    
             for (let textContent of results.texts) {
-                if (isFullSentence(textContent)) {
-                    let highlightedText = highlightText(textContent, accidentType);
+                const timeNode = textContent.parentNode.querySelector('a[href*="/status/"] > time');
+                const time = timeNode ? timeNode.getAttribute('datetime') : '';
+    
+                if (isFullSentence(textContent.textContent)) {
+                    const { highlightedText, time: extractedTime } = highlightText(textContent.textContent, accidentType, time);
                     let elementDiv = document.createElement('div');
-                    elementDiv.innerHTML = highlightedText;
+                    elementDiv.innerHTML = `${highlightedText} <span class="text-gray-500">(${extractedTime})</span>`;
                     elementDiv.className = 'result-item';
                     resultDiv.appendChild(elementDiv);
                 }
@@ -181,7 +187,7 @@ document.addEventListener('DOMContentLoaded', function () {
         } else {
             resultDiv.textContent = 'No elements found with the specified class, element type, and accident type.';
         }
-
+    
         resultDiv.classList.remove('hidden');
         loadingSpinner.classList.add('hidden');
         checkButton.disabled = false;
