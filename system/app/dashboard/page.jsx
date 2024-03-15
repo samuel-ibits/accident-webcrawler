@@ -1,4 +1,4 @@
-// "use client";
+// "use server"
 // Dashboard.js
 
 import React
@@ -78,6 +78,7 @@ const queryItem= await fetchQueries()
             verifiedItems={verifiedItems}
             unverifiedItems={unverifiedItems}
             scrappedItems={scrappedItems.data}
+            // fetchData={fetchedScrappedItems}
           /> : "No data yet"}
         </div>
       </div>

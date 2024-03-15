@@ -18,14 +18,31 @@ export default function ScrapeForm() {
   const handleInput = (e) => {
     const fieldName = e.target.name;
     const fieldValue = e.target.value;
+    
 
     setFormData((prevState) => ({
       ...prevState,
       [fieldName]: fieldValue,
+ 
     }));
 
     JSON.stringify(formData);
+  };
+  const handleSelect = (e) => {
+  const selectedIndex = e.target.selectedIndex;
+  const selectedOptionId = e.target.options[selectedIndex].getAttribute('data-id');
 
+    const fieldName = e.target.name;
+    const fieldValue = e.target.value;
+    
+
+    setFormData((prevState) => ({
+      ...prevState,
+      [fieldName]: fieldValue,
+      categoryid:selectedOptionId,
+    }));
+
+    JSON.stringify(formData);
   };
   const fetchData = async (token) => {
     const endpoint = 'https://dev.mysecureview.com/api/live/incident_categories'; 
@@ -91,7 +108,7 @@ export default function ScrapeForm() {
     e.preventDefault();
     setIsSubmitting(true);
 
-    // alert(JSON.stringify(formData));
+    alert(JSON.stringify(formData));
     const formURL = "http://localhost:3000/api/scrape/run";
 
     fetch(formURL, {
@@ -163,6 +180,8 @@ export default function ScrapeForm() {
               <option value="guyana">News Room Guyana</option>
               <option value="ewn">Ewn Traffic</option>
               <option value="sowetanlive">Sowetanlive</option>
+              <option value="alive">Arrive alive</option>
+              <option value="africanews">Africa new</option>
 
               {/* Add more options as needed */}
             </select>
@@ -180,13 +199,13 @@ export default function ScrapeForm() {
             <select 
             id="emergencyType"
             name="emergencyType"
-            onChange={handleInput}
-              value={formData.emergencyType}
+            onChange={handleSelect}
+            value={formData.emergencyType}
             className="text-gray-600 mt-1 p-2 border border-gray-300 rounded-md w-full focus:outline-none focus:ring focus:border-blue-500"
             >
               <option value="">Select an option</option>
               {options.map((option, index) => (
-                <option key={index} value={option.name}>{option.name}</option>
+                <option key={index} value={option.name} data-id={option.id}>{option.name}</option>
               ))}
             </select>
 
@@ -201,7 +220,7 @@ export default function ScrapeForm() {
               From Date
             </label>
             <input
-              type="date"
+              type="datetime-local"
               id="fromDate"
               name="fromDate"
               onChange={handleInput}
@@ -218,7 +237,7 @@ export default function ScrapeForm() {
               To Date
             </label>
             <input
-              type="date"
+              type="datetime-local"
               id="toDate"
               name="toDate"
               onChange={handleInput}

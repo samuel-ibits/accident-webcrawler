@@ -12,8 +12,10 @@ const Gateway = new Gateways();
 export async function POST(request) {
   //get destructure data
 
-  const { emergencyType, fromDate, toDate, specialParameters, searchBase } =
+  const { categoryid,emergencyType, fromDate, toDate, specialParameters, searchBase } =
     await request.json();
+    // console.log(categoryid)
+    // return
   //Gateway stuff, send data to proper execution route
   if (typeof Gateway[searchBase] === "function") {
     await Gateway[searchBase]({
@@ -22,6 +24,7 @@ export async function POST(request) {
       toDate,
       specialParameters,
       searchBase,
+      categoryid
     });
   } else {
     console.log("method not found redirecting to searchBar gateway instead of ", searchBase);
@@ -31,6 +34,7 @@ export async function POST(request) {
       toDate,
       specialParameters,
       searchBase,
+      categoryid
     });
   }
   //db stuffs

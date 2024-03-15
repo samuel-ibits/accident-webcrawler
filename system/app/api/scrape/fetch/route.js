@@ -25,19 +25,21 @@ export async function POST(request) {
     dateOfOccurance,
     timeOfOcccurance,
     accidentDetails,
-    status
+    status,
+    categoryid
  } =
     await request.json();
   await connectMongoDB();
-  await TempoaryDB.create({
+ const data= await TempoaryDB.create({
     accidentType,
     location,
     dateOfOccurance,
     timeOfOcccurance,
     accidentDetails,
     status,
+    categoryid
   });
-  return NextResponse.json({ message: "created" }, { status: 201 });
+  return NextResponse.json({ message: "created" ,data}, { status: 201 });
 }
 
   //handles delete each request

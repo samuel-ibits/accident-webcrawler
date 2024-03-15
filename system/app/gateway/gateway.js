@@ -47,7 +47,7 @@ export default class Gateways {
 
   async google(request) {
     //get the data
-    const { emergencyType, fromDate, toDate, specialParameters, searchBase } =
+    const { emergencyType, fromDate, toDate, specialParameters, searchBase, categoryid } =
       await request;
 
     const text =
@@ -77,7 +77,7 @@ export default class Gateways {
 
   async twitter(request) {
     //get the data
-    const { emergencyType, fromDate, toDate, specialParameters, searchBase } =
+    const { emergencyType, fromDate, toDate, specialParameters, searchBase, categoryid } =
       await request;
 
     const text =
@@ -108,9 +108,9 @@ export default class Gateways {
   async searchBar(request) {
    
     //get the data
-    const { emergencyType, fromDate, toDate, specialParameters, searchBase } =
+    const { emergencyType, fromDate, toDate, specialParameters, searchBase, categoryid } =
     await request;
-
+console.log("cat on gateway", categoryid)
   
       await initiateSearchBarWorker({
        emergencyType,
@@ -118,6 +118,7 @@ export default class Gateways {
        toDate,
        specialParameters,
        searchBase,
+       categoryid
      });
 
     return;
