@@ -8,6 +8,7 @@ const tough = require("tough-cookie");
 const rateLimit = require("axios-rate-limit");
 const { randomDelay } = require("random-delay");
 const moment = require("moment");
+const mongoose = require("mongoose");
 
 puppeteer.use(StealthPlugin());
 
@@ -15,6 +16,40 @@ const app = express();
 const port = 3000;
 
 app.use(express.static("public"));
+app.use(express.json());
+
+// MongoDB connection
+mongoose.connect("mongodb+srv://greatattai442442:PZKKazRLk0uQOPQU@cluster0.mfnv3rn.mongodb.net/", {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+});
+const db = mongoose.connection;
+db.on("error", console.error.bind(console, "MongoDB connection error:"));
+
+// Define the schema
+const tempoarySchema = new mongoose.Schema(
+  {
+    accidentType: { type: String },
+    location: { type: String },
+    dateOfOccurance: { type: String },
+    timeOfOcccurance: { type: String },
+    accidentDetails: { type: String },
+    status: { type: String },
+  },
+  {
+    timestamps: true,
+  }
+);
+
+// Create the model
+const TempoaryDB = mongoose.model("TempoaryDB", tempoarySchema);
+
+TempoaryDB.create({
+  accidentType:'accidentType',
+  location:'location',
+  dateOfOccurance:'dateOfOccurance',
+  accidentDetails:'accidentDetails',
+})
 
 app.get("/", (req, res) => {
   res.sendFile(__dirname + "/public/index.html");
@@ -1118,4 +1153,30 @@ app.get("/search", async (req, res) => {
   );
 
   res.json(reports);
+});
+
+// Add a new route to save the report
+app.post("/save-report", async (req, res) => {
+  try {
+    const {
+      accidentType,
+      location,
+      dateOfOccurance,
+      accidentDetails,
+    } = req.body;
+
+    const newReport = new TempoaryDB({
+      accidentType,
+      location,
+      dateOfOccurance,
+      accidentDetails,
+      status: "Pending",
+    });
+
+    const savedReport = await newReport.save();
+    res.status(200).json(savedReport);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to save report" });
+  }
 });

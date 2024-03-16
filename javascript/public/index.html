@@ -188,9 +188,9 @@
             <p class="text-sm">Time: ${report.date}</p>
             <p class="text-sm">Details: ${report.details}</p>
             <p class="text-sm">Location: ${report.location}</p> <!-- Add location to the reports -->
-            <button onclick="saveReport()" class="btn-icon bg-green-500 p-2 text-white" title="Save">
-              <i class="bi bi-floppy"></i>
-            </button>
+            <button onclick="saveReport({ accidentType: '${report.accidentType}', location: '${report.location}', date: '${report.date}', details: '${report.details}' })" class="btn-icon bg-green-500 p-2 text-white" title="Save">
+  <i class="bi bi-floppy"></i>
+</button>
             <button onclick="deleteReport()" class="btn-icon p-2 bg-red-500 text-white" title="Delete">
               <i class="bi bi-trash"></i>
             </button>
@@ -235,10 +235,31 @@
   `;
     }
 
-
-    function saveReport() {
-      // Add save logic here
-      alert('Report saved!');
+    function saveReport(report) {
+      // Send a POST request to the server to save the report
+      fetch("/save-report", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          accidentType: report.accidentType,
+          location: report.location,
+          dateOfOccurance: report.date,
+          accidentDetails: report.details,
+        }),
+      })
+        .then((response) => {
+          if (response.ok) {
+            alert("Report saved successfully!");
+          } else {
+            throw new Error("Failed to save report");
+          }
+        })
+        .catch((error) => {
+          console.error("Error saving report:", error);
+          alert("Failed to save report. Please try again.");
+        });
     }
 
     function deleteReport() {
