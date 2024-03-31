@@ -49,8 +49,85 @@ function isDateInRange(reportDate, startDate, endDate) {
 async function searchAndScrape(searchBase, query, startDate, endDate) {
   try {
     let searchUrl = "";
-
     if (searchBase === "vanguard") {
+      let searchUrl = `https://www.vanguardngr.com/?s=${query}&custom_search=1`;
+      let pageNumber = 1;
+     
+      console.log(`Starting scraping from page: ${pageNumber}`);
+     
+      const browser = await puppeteer.launch({ headless: true });
+      const page = await browser.newPage();
+      const userAgent = randomUseragent.getRandom();
+     
+      await page.setUserAgent(userAgent);
+     
+      // Increase navigation timeout
+      await page.goto(searchUrl, { timeout: 60000 });
+     
+      // Wait for some time to simulate human-like behavior
+      await page.waitForTimeout(randomDelay());
+     
+      let reports = [];
+     
+      try {
+         while (true) {
+            console.log(`Scraping page: ${pageNumber}`);
+     
+            const html = await page.content();
+            const $ = cheerio.load(html);
+     
+            // Extract the maximum number of pages from the page info
+            const pageInfoText = $(".pagination-wrapper .pagination__numbers .page-numbers").last().text();
+            const maxPages = parseInt(pageInfoText) || 1; // Use 1 if not found
+     
+            let accidentReports = $("article.entry-list-large");
+     
+            accidentReports.each((index, element) => {
+              const accidentType = $(element).find(".entry-title a").text();
+              const date = $(element).find(".entry-date").text().trim();
+              const details = $(element).find(".entry-excerpt p").text();
+     
+              // Check if the report's date is within the specified range
+              if (isDateInRange(date, startDate, endDate)) {
+                // Add 'location: Nigeria' property for reports from 'vanguard' search base
+                reports.push({ accidentType, date, details, location: "Nigeria" });
+              }
+            });
+     
+            // Check if there are more pages
+            const nextPageButton = $(".pagination-wrapper .pagination__next a");
+            if (nextPageButton.length === 0 || pageNumber >= maxPages) {
+              console.log(`Finished scraping. Total reports found: ${reports.length}`);
+              break;
+            }
+     
+            // Navigate to the next page
+            pageNumber++;
+            searchUrl = `https://www.vanguardngr.com/page/${pageNumber}/?s=${query}&custom_search=1`;
+            console.log(`Navigating to page: ${pageNumber}`);
+            await page.goto(searchUrl, { timeout: 60000 });
+            await page.waitForTimeout(randomDelay());
+         }
+      } catch (error) {
+         console.error(`An error occurred during scraping: ${error.message}`);
+         console.log(`Returning ${reports.length} reports scrapped so far.`);
+      } finally {
+         await browser.close();
+      }
+     
+      if (reports.length === 0) {
+         console.log("No results found.");
+         return "No results found.";
+      }
+     
+      console.log(`Returning ${reports.length} reports.`);
+      return reports;
+     }
+     
+     
+     
+    
+   else if (searchBase === "thecurrent") {
       let searchUrl = `https://thecurrent.pk/?s=${query}`;
       let pageNumber = 1;
 
