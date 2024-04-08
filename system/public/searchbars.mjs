@@ -21,7 +21,7 @@ import { Console } from "console";
 
 //send results back to repoary sorage
 async function sendToApi(data) {
-  const apiUrl = "http://localhost:3000/fetch";
+  const apiUrl = process.env.URL+"api/fetch";
   const requestOptions = {
     method: "POST",
     headers: {

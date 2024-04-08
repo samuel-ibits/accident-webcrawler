@@ -27,7 +27,8 @@ const ScraperStatus = ({
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
   // Filter the current items based on the search query
-  const filteredItems = scrappedItems.filter((item) =>
+  const filteredItems = scrappedItems
+  .filter((item) =>
     item.accidentType.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
@@ -46,9 +47,9 @@ console.log("some body returned")
 
     const {_id}=body;
     const { newStatus } = data;
-    // alert(newStatus)
+    // alert(newStatus)ta
     try {
-      const res = await fetch(`http://localhost:3000/api/scrape/${_id}`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_URL}/api/scrape/${_id}`, {
         method: "PUT",
         cache: "no-store",
         headers: {
@@ -67,7 +68,7 @@ console.log("some body returned")
 
 
 // send to secure view db
-const endpoint= 'http://localhost:3000/api/scrape/submit'
+const endpoint=`${process.env.NEXT_PUBLIC_URL}/api/scrape/submit`
 const ress =await fetch(endpoint, {
   method: 'POST',
   headers: {
@@ -154,7 +155,7 @@ alert("sent to secureview", responseData)
       <ul>
         {currentItems.map((item, index) => (
              <li key={index} className="mb-4 p-4 border border-gray-300 rounded">
-              {item.category_id}f
+              {item.category_id}
              <strong>Accident Type:</strong> {item.accidentType}
              <br />
              <strong>Location:</strong> {item.location}

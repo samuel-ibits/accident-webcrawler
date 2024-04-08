@@ -27,10 +27,6 @@ function formatDate(inputDate) {
     return formattedDate;
   }
   
-  const inputDate = "2024-03-13T10:46";
-  const formattedDate = formatDate(inputDate);
-  console.log(formattedDate); // Output: 13/03/2024 10:46 AM
-
   
 
 // Handles POST requests to /api
@@ -44,23 +40,23 @@ export async function POST(request) {
       category_id
    } =
       await request.json();
-console.log("category_id",category_id)
 
-
-const body={
-    "category_id":category_id,
-      "title": accidentType,
-      "description": accidentDetails,
-      "address":location,
-      "start_date_time": formatDate(dateOfOccurance),
-      "status": 0,
-      "approve_status":0,
-      "latitude":0,
-      "longitude": 0,
-      "state": location,
-      "country":location
-  
-}
+      const bodydata= {
+        "category_id": 1,
+        "title": accidentType,
+        "description": accidentDetails,
+        "address": location,
+        "start_date_time": formatDate(dateOfOccurance),
+        "status": 0,
+        "approve_status": 0,
+        "latitude": 0,
+        "longitude": 0,
+        "state": location,
+        "country": location
+      };
+      
+      console.log(bodydata)
+      console.log(JSON.stringify(bodydata))
    try {
     
 // send to secure view db
@@ -69,12 +65,17 @@ const ress =await fetch(endpoint, {
   method: 'POST',
   headers: {
     "Authorization": `Bearer ${process.env.NEXT_PUBLIC_SECURE_VIEW_BEARER_TOKEN}`,
-    "Content-Type": "application/json"
+    // "Content-Type": "application/json"
   },
-body: JSON.stringify(body),
+body:JSON.stringify(bodydata),
 });
-const responseData = await ress.json();
-console.log("validate",responseData)
+
+const responseText = await ress.text();
+console.log("Response text:", responseText);
+
+const responseData = JSON.parse(responseText);
+
+console.log("secure view response",responseData, "data", body)
 
     
     return NextResponse.json({responseData});

@@ -35,7 +35,7 @@ async function sendToApi(data,categoryid) {
   }
 
 
-  const apiUrl = "http://localhost:3000/api/scrape/fetch";
+  const apiUrl = `${process.env.NEXT_PUBLIC_URL}/api/scrape/fetch`;
   const requestOptions = {
     method: "POST",
     headers: {

@@ -10,7 +10,7 @@ import Navbar from "../components/navbar/page"; // Adjust the import path based 
 
 const fetchedScrappedItems =async ()=>{
 try{
- const res =  await fetch("http://localhost:3000/api/scrape/status", {
+ const res =  await fetch(`${process.env.NEXT_PUBLIC_URL}/api/scrape/status`, {
       method: "GET",
       cache:"no-store",
     })
@@ -29,7 +29,7 @@ console.log("errorloading tempdb", error)
 //fecthed queries
 const fetchQueries = async () => {
   try {
-    const res = await fetch("http://localhost:3000/api/scrape/run", {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_URL}/api/scrape/run`, {
       method: "GET",
       cache: "no-store",
     });

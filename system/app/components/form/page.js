@@ -109,7 +109,7 @@ export default function ScrapeForm() {
     setIsSubmitting(true);
 
     alert(JSON.stringify(formData));
-    const formURL = "http://localhost:3000/api/scrape/run";
+    const formURL = `${process.env.NEXT_PUBLIC_URL}/api/scrape/run`;
 
     fetch(formURL, {
       method: "POST",
