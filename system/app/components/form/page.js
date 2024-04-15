@@ -175,6 +175,7 @@ export default function ScrapeForm() {
               <option value="test">Select Search Base</option>
               <option value="google">Google.com</option>
               <option value="vanguard">Vanguard News</option>
+              <option value="thecurrent">The current</option>
               <option value="punch">Punch newspaper</option>
               <option value="daily">Daily trust</option>
               <option value="guyana">News Room Guyana</option>
