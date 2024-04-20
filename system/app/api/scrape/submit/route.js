@@ -56,7 +56,7 @@ export async function POST(request) {
       };
       
       console.log(bodydata)
-      console.log(JSON.stringify(bodydata))
+      // console.log(JSON.stringify(bodydata))
    try {
     
 // send to secure view db
@@ -65,15 +65,14 @@ const ress =await fetch(endpoint, {
   method: 'POST',
   headers: {
     "Authorization": `Bearer ${process.env.NEXT_PUBLIC_SECURE_VIEW_BEARER_TOKEN}`,
-    // "Content-Type": "application/json"
+    "Content-Type": "application/json"
   },
 body:JSON.stringify(bodydata),
 });
 
-const responseText = await ress.text();
-console.log("Response text:", responseText);
+console.log("Response text:", ress);
 
-const responseData = JSON.parse(responseText);
+const responseData = JSON.parse(ress);
 
 console.log("secure view response",responseData, "data", body)
 
