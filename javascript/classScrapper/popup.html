@@ -46,14 +46,13 @@
 <body class="bg-gray-100">
   <div id="popup-content" class="p-4 bg-white rounded-lg shadow-md">
     <h2 class="text-2xl font-bold mb-6">Class Scraper</h2>
-  
     <div class="relative hidden">
       <input type="text" id="classInput" placeholder="e.g., myClass"
         class="mt-1 block w-full p-2 rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500"
         aria-label="Enter class name" />
       <div id="inputValidation" class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none"></div>
     </div>
-   
+ 
     <select id="elementSelect"
       class="mt-1 block w-full p-2 rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 hidden">
       <option value="span">span</option>
@@ -66,7 +65,7 @@
     </div>
     <select id="searchQuery" name="searchQuery"
       class="mt-1 block w-full p-2 rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500">
-      <option value="Select Accident Type" selected>Select Accident Type</option>
+      <option value="Select Accident Type">Select Accident Type</option>
       <option value="Building Collapse">Building Collapse</option>
       <option value="Fallen Tanker">Fallen Tanker</option>
       <option value="Fire">Fire</option>
@@ -81,6 +80,7 @@
       <option value="Vehicle Breakdown">Vehicle Breakdown</option>
       <option value="Violent Attacks">Violent Attacks</option>
       <option value="WARNING">WARNING</option>
+      <option value="Javascript" selected>Javascript</option>
       <option value="Warning- Flood">Warning- Flood</option>
 
     </select>
@@ -110,17 +110,16 @@
         class="py-2 px-4 rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
         Save Results
       </button>
-      <!-- <button id="copyButton"
+      <button id="copyButton"
         class="py-2 px-4 rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
         Copy to Clipboard
-      </button> -->
+      </button>
     </div>
     <div id="searchHistory" class="mt-6">
       <h3 class="text-lg font-semibold mb-2">Recent Searches:</h3>
       <ul id="searchHistoryList" class="text-sm"></ul>
     </div>
   </div>
-
 </body>
 
 </html>
